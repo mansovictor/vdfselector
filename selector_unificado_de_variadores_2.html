@@ -1,0 +1,2345 @@
+<!DOCTYPE html>
+<html lang="es" class="h-full bg-slate-50">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Selector Unificado de Variadores - Dexis Ibérica</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    colors: {
+                        dexis: { red: '#E30613', darkred: '#B8040F', blue: '#0F172A', black: '#1A1A1A', light: '#F8FAFC' }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        .modal-backdrop { background-color: rgba(15, 23, 42, 0.65); backdrop-filter: blur(4px); }
+        
+        @media print {
+            body * { visibility: hidden !important; }
+            body.print-roi #roi-calculator-box, body.print-roi #roi-calculator-box * { visibility: visible !important; }
+            body.print-roi #roi-calculator-box { position: absolute !important; left: 0 !important; top: 0 !important; width: 100% !important; color: black !important; background: white !important; border: none !important; box-shadow: none !important; }
+            
+            body.print-compare #compare-modal, body.print-compare #compare-modal * { visibility: visible !important; }
+            body.print-compare #compare-modal { position: absolute !important; left: 0 !important; top: 0 !important; width: 100% !important; background: white !important; color: black !important; max-height: none !important; overflow: visible !important; border: none !important; box-shadow: none !important; }
+            body.print-compare #compare-modal .bg-slate-900, body.print-compare #compare-modal .bg-slate-800 { background: white !important; color: black !important; border-bottom: 2px solid #000 !important; }
+            body.print-compare #compare-modal button, body.print-compare #compare-modal label { display: none !important; }
+            body.print-compare #compare-modal-body { overflow: visible !important; max-height: none !important; }
+            body.print-compare #compare-modal table { border: 1px solid #ccc !important; width: 100% !important; }
+            body.print-compare #compare-modal th, body.print-compare #compare-modal td { border: 1px solid #ddd !important; color: black !important; background: white !important; }
+        }
+    </style>
+</head>
+<body class="h-full text-slate-800 flex flex-col font-sans antialiased">
+
+    <!-- HEADER -->
+    <header class="bg-white border-b border-slate-200 shadow-sm sticky top-0 z-30">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-4">
+                <div class="flex items-center space-x-3 cursor-pointer" onclick="resetFilters()">
+                    <svg class="h-10 w-auto" viewBox="0 0 320 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M42 20L78 56L54 80L18 44L42 20Z" fill="#E30613"/>
+                        <path d="M22 62L40 80L22 98L4 80L22 62Z" fill="#1A1A1A"/>
+                        <path d="M54 80L78 56V72L62 88L40 80L54 80Z" fill="#1A1A1A"/>
+                        <text x="95" y="62" font-family="'Inter', sans-serif" font-weight="900" font-size="52" fill="#E30613" letter-spacing="1">DEXIS</text>
+                        <text x="96" y="98" font-family="'Inter', sans-serif" font-weight="600" font-size="28" fill="#1A1A1A" letter-spacing="4">IBERICA</text>
+                    </svg>
+                    <div class="hidden md:block pl-3 border-l border-slate-200">
+                        <h1 class="font-extrabold text-sm text-slate-900 leading-none">Selector de Variadores</h1>
+                        <p class="text-[11px] text-dexis-red mt-0.5 font-bold">Automation Solutions</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="flex items-center space-x-2 sm:space-x-3">
+                <button onclick="openWizardModal()" class="bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white px-3 py-1.5 rounded-lg text-xs sm:text-sm font-extrabold transition shadow flex items-center space-x-1.5">
+                    <i class="fa-solid fa-wand-magic-sparkles text-amber-300"></i>
+                    <span>Asistente Guiado</span>
+                </button>
+
+                <button onclick="openCompareModal()" id="compare-top-btn" class="hidden bg-sky-600 hover:bg-sky-700 text-white px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-bold transition shadow flex items-center space-x-1.5">
+                    <i class="fa-solid fa-scale-balanced"></i>
+                    <span>Comparar (<span id="compare-count-badge">0</span>)</span>
+                </button>
+
+                <button onclick="contactSupportNotFound()" class="bg-amber-500 hover:bg-amber-600 text-white px-3 py-1.5 rounded-lg text-xs sm:text-sm font-bold transition shadow flex items-center space-x-1.5" title="¿No encuentras tu variador? Consultar Soporte Dexis">
+                    <i class="fa-solid fa-headset text-sm"></i>
+                    <span class="hidden lg:inline">¿No encuentras tu variador?</span>
+                    <span class="lg:hidden">Soporte</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- MAIN CONTENT LAYOUT -->
+    <div class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 flex flex-col md:flex-row gap-6">
+
+        <!-- SIDEBAR FILTERS -->
+        <aside class="w-full md:w-80 flex-shrink-0">
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5 sticky top-20 space-y-5 max-h-[calc(100vh-6rem)] overflow-y-auto">
+                <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+                    <h2 class="font-bold text-slate-900 flex items-center gap-2">
+                        <i class="fa-solid fa-filter text-dexis-red"></i>
+                        Filtros de Selección
+                    </h2>
+                    <button onclick="resetFilters()" class="text-xs font-semibold text-dexis-red hover:underline flex items-center gap-1">
+                        <i class="fa-solid fa-rotate-left"></i> Limpiar
+                    </button>
+                </div>
+
+                <!-- Potencia Motor -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
+                        Potencia Solicitada (kW)
+                    </label>
+                    <div class="flex items-center space-x-2">
+                        <input type="number" id="filter-power" step="0.1" min="0.1" max="630" placeholder="Ej: 0.75, 4, 15, 30, 55..." oninput="applyFilters(); syncRoiPower();" onchange="applyFilters();"
+                               class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-dexis-red font-semibold text-slate-900">
+                        <span class="text-xs font-bold text-slate-500">kW</span>
+                    </div>
+                </div>
+
+                <!-- Tensión -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
+                        Tensión de Alimentación
+                    </label>
+                    <div class="space-y-1.5">
+                        <label class="flex items-center space-x-2 text-xs font-medium text-slate-700 cursor-pointer">
+                            <input type="checkbox" value="1x230" class="filter-voltage rounded text-dexis-red focus:ring-dexis-red" onchange="applyFilters()" checked>
+                            <span>Monofásico 1 x 230V</span>
+                        </label>
+                        <label class="flex items-center space-x-2 text-xs font-medium text-slate-700 cursor-pointer">
+                            <input type="checkbox" value="3x230" class="filter-voltage rounded text-dexis-red focus:ring-dexis-red" onchange="applyFilters()" checked>
+                            <span>Trifásico 3 x 230V</span>
+                        </label>
+                        <label class="flex items-center space-x-2 text-xs font-medium text-slate-700 cursor-pointer">
+                            <input type="checkbox" value="3x400" class="filter-voltage rounded text-dexis-red focus:ring-dexis-red" onchange="applyFilters()" checked>
+                            <span>Trifásico 3 x 400V / 480V</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Aplicación -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
+                        Tipo de Aplicación / Carga
+                    </label>
+                    <select id="filter-application" onchange="applyFilters()" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-dexis-red">
+                        <option value="all">-- Todas las Aplicaciones --</option>
+                        <option value="hvac">HVAC / Ventilación / Bombeo (Par Variable)</option>
+                        <option value="compressor_light">Compresores Centrífugos / Estándar</option>
+                        <option value="compressor_heavy">Compresores Pesados (Pistones/Tornillo)</option>
+                        <option value="conveyor">Cintas Transportadoras / Trituradoras</option>
+                        <option value="hoisting">Elevación / Grúas (Alto Par / Freno)</option>
+                        <option value="high_perf">Maquinaria de Alto Rendimiento</option>
+                        <option value="standard">Máquinas Industriales Estándar</option>
+                    </select>
+                </div>
+
+                <!-- Modo de Control -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
+                        Modo de Control y Feedback
+                    </label>
+                    <div class="space-y-1.5">
+                        <label class="flex items-center space-x-2 text-xs font-medium text-slate-700 cursor-pointer">
+                            <input type="radio" name="control-loop" value="all" checked onchange="applyFilters()" class="text-dexis-red focus:ring-dexis-red">
+                            <span>Todos los tipos</span>
+                        </label>
+                        <label class="flex items-center space-x-2 text-xs font-medium text-slate-700 cursor-pointer">
+                            <input type="radio" name="control-loop" value="open" onchange="applyFilters()" class="text-dexis-red focus:ring-dexis-red">
+                            <span>Lazo Abierto (Sin Encoder / V/f / Vectorial)</span>
+                        </label>
+                        <label class="flex items-center space-x-2 text-xs font-medium text-slate-700 cursor-pointer">
+                            <input type="radio" name="control-loop" value="closed" onchange="applyFilters()" class="text-dexis-red focus:ring-dexis-red">
+                            <span>Lazo Cerrado (Requiere Encoder)</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- STO / PLC -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
+                        Seguridad e Inteligencia
+                    </label>
+                    <div class="space-y-1.5">
+                        <label class="flex items-center space-x-2 text-xs font-medium text-slate-700 cursor-pointer">
+                            <input type="checkbox" id="filter-sto" class="rounded text-dexis-red focus:ring-dexis-red" onchange="applyFilters()">
+                            <span>Seguridad STO Integrada</span>
+                        </label>
+                        <label class="flex items-center space-x-2 text-xs font-medium text-slate-700 cursor-pointer">
+                            <input type="checkbox" id="filter-plc" class="rounded text-dexis-red focus:ring-dexis-red" onchange="applyFilters()">
+                            <span>PLC Interno / Programable</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Comunicaciones -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
+                        Comunicación / Bus de Campo
+                    </label>
+                    <select id="filter-comm" onchange="applyFilters()" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-dexis-red">
+                        <option value="all">-- Cualquiera --</option>
+                        <option value="modbus">Modbus RTU (Serie)</option>
+                        <option value="ethernet">Ethernet / Modbus TCP / EtherNet IP</option>
+                        <option value="profinet">Profinet</option>
+                        <option value="ethercat">EtherCAT</option>
+                        <option value="canopen">CANopen</option>
+                        <option value="bacnet">BACnet (HVAC)</option>
+                        <option value="profibus">Profibus DPV1</option>
+                        <option value="nfc">NFC Config</option>
+                    </select>
+                </div>
+
+                <!-- Marcas Dinámicas -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
+                        Marcas (Fabricantes)
+                    </label>
+                    <div id="brand-checkboxes-container" class="space-y-1.5"></div>
+                </div>
+
+            </div>
+        </aside>
+
+        <!-- MAIN RESULTS AND ROI CALCULATOR -->
+        <main class="flex-1 min-w-0">
+
+            <!-- CALCULADORA DE ROI -->
+            <div id="roi-calculator-box" class="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white rounded-2xl shadow-xl border-2 border-emerald-500/80 p-5 mb-6 transition-all duration-300">
+                <div class="flex items-center justify-between pb-3 border-b border-slate-700/80 mb-4 flex-wrap gap-2">
+                    <div class="flex items-center space-x-3">
+                        <div class="bg-emerald-500 text-slate-950 p-2.5 rounded-xl font-black text-lg shadow-sm">
+                            <i class="fa-solid fa-leaf"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-extrabold text-base text-white tracking-wide flex items-center gap-2 flex-wrap">
+                                Calculadora de ROI y Ahorro Energético
+                                <span class="bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 text-[10px] font-black uppercase px-2 py-0.5 rounded-full">Leyes de Afinidad (P ~ n³)</span>
+                            </h3>
+                            <p class="text-xs text-slate-300 mt-0.5">Calcula la rentabilidad y tiempo de amortización (Payback) al instalar un variador Dexis.</p>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center space-x-2 flex-wrap gap-y-1">
+                        <button onclick="copyRoiSummaryToClipboard()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-2.5 py-1 rounded-lg text-xs font-bold transition flex items-center space-x-1 shadow">
+                            <i class="fa-solid fa-copy"></i>
+                            <span class="hidden sm:inline">Copiar Oferta para Email</span>
+                        </button>
+                        <button onclick="printRoiCalculator()" class="bg-sky-600 hover:bg-sky-700 text-white px-2.5 py-1 rounded-lg text-xs font-bold transition flex items-center space-x-1 shadow">
+                            <i class="fa-solid fa-file-pdf"></i>
+                            <span class="hidden sm:inline">Imprimir / PDF</span>
+                        </button>
+                        <button onclick="toggleRoiCalculator()" class="text-slate-400 hover:text-white px-2 py-1 rounded text-xs font-bold transition flex items-center space-x-1 bg-slate-800 border border-slate-700">
+                            <i id="roi-toggle-icon" class="fa-solid fa-chevron-up"></i>
+                            <span id="roi-toggle-text" class="hidden sm:inline">Plegar</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div id="roi-calculator-content" class="space-y-5">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-xs">
+                        <div class="bg-slate-800/90 p-3 rounded-xl border border-slate-700">
+                            <label class="block text-[11px] font-extrabold uppercase text-slate-300 mb-1">Potencia Motor (kW)</label>
+                            <div class="flex items-center space-x-2">
+                                <input type="number" id="roi-kw" value="30" step="0.1" min="0.1" oninput="calculateRoi()"
+                                       class="w-full bg-slate-900 border border-slate-600 rounded-lg px-2.5 py-1.5 text-sm font-bold text-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                                <span class="font-bold text-slate-400">kW</span>
+                            </div>
+                        </div>
+
+                        <div class="bg-slate-800/90 p-3 rounded-xl border border-slate-700">
+                            <label class="block text-[11px] font-extrabold uppercase text-slate-300 mb-1">Horas Operación / Año</label>
+                            <div class="flex items-center space-x-2">
+                                <input type="number" id="roi-hours" value="8760" step="100" min="100" max="8760" oninput="calculateRoi()"
+                                       class="w-full bg-slate-900 border border-slate-600 rounded-lg px-2.5 py-1.5 text-sm font-bold text-white focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                                <span class="font-bold text-slate-400">h/año</span>
+                            </div>
+                        </div>
+
+                        <div class="bg-slate-800/90 p-3 rounded-xl border border-slate-700">
+                            <label class="block text-[11px] font-extrabold uppercase text-slate-300 mb-1">Coste Energía (€/kWh)</label>
+                            <div class="flex items-center space-x-2">
+                                <input type="number" id="roi-cost" value="0.12" step="0.01" min="0.01" oninput="calculateRoi()"
+                                       class="w-full bg-slate-900 border border-slate-600 rounded-lg px-2.5 py-1.5 text-sm font-bold text-amber-400 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                                <span class="font-bold text-slate-400">€/kWh</span>
+                            </div>
+                        </div>
+
+                        <div class="bg-slate-800/90 p-3 rounded-xl border border-slate-700">
+                            <label class="block text-[11px] font-extrabold uppercase text-slate-300 mb-1">Reducción Vel. Media (%)</label>
+                            <div class="flex items-center space-x-2">
+                                <input type="number" id="roi-speed-red" value="20" step="1" min="1" max="60" oninput="calculateRoi()"
+                                       class="w-full bg-slate-900 border border-slate-600 rounded-lg px-2.5 py-1.5 text-sm font-bold text-sky-400 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                                <span class="font-bold text-slate-400">%</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                        <div class="bg-slate-800/50 p-3 rounded-xl border border-slate-700 flex items-center justify-between">
+                            <label class="font-bold text-slate-300">Tipo de Carga / Aplicación:</label>
+                            <select id="roi-load-type" onchange="calculateRoi()" class="bg-slate-900 text-white font-bold border border-slate-600 rounded-lg px-2.5 py-1.5 text-xs focus:ring-2 focus:ring-emerald-500">
+                                <option value="centrifugal" selected>Bombas / Ventiladores (Par Variable - P ~ n³)</option>
+                                <option value="constant">Cintas / Compresores (Par Constante - P ~ n)</option>
+                            </select>
+                        </div>
+
+                        <div class="bg-slate-800/50 p-3 rounded-xl border border-slate-700 flex items-center justify-between">
+                            <label class="font-bold text-slate-300">Inversión Estimada Variador (€):</label>
+                            <div class="flex items-center space-x-2">
+                                <input type="number" id="roi-vfd-cost" value="2370" step="10" min="50" oninput="calculateRoi()"
+                                       class="w-36 bg-slate-900 border border-slate-600 rounded-lg px-2.5 py-1.5 text-xs font-bold text-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                                <span class="font-bold text-slate-400">€</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                        <div class="bg-gradient-to-br from-emerald-950 to-slate-900 p-3.5 rounded-xl border-2 border-emerald-500/60 text-center">
+                            <span class="text-[10px] uppercase font-black text-emerald-400 tracking-wider block">Ahorro Económico Anual</span>
+                            <span id="roi-res-money" class="text-xl sm:text-2xl font-black text-white block mt-0.5">0 €</span>
+                            <span class="text-[10px] text-emerald-300 font-bold block mt-0.5">ahorrados/año</span>
+                        </div>
+
+                        <div class="bg-slate-800/90 p-3.5 rounded-xl border border-slate-700 text-center">
+                            <span class="text-[10px] uppercase font-black text-slate-400 tracking-wider block">Energía Ahorrada</span>
+                            <span id="roi-res-kwh" class="text-lg sm:text-xl font-extrabold text-sky-400 block mt-0.5">0 kWh</span>
+                            <span class="text-[10px] text-slate-400 block mt-0.5">kWh/año no consumidos</span>
+                        </div>
+
+                        <div class="bg-slate-800/90 p-3.5 rounded-xl border border-slate-700 text-center">
+                            <span class="text-[10px] uppercase font-black text-slate-400 tracking-wider block">Amortización (Payback)</span>
+                            <span id="roi-res-months" class="text-lg sm:text-xl font-extrabold text-amber-400 block mt-0.5">0 Meses</span>
+                            <span id="roi-res-years" class="text-[10px] text-amber-300 font-bold block mt-0.5">(0.00 años)</span>
+                        </div>
+
+                        <div class="bg-slate-800/90 p-3.5 rounded-xl border border-slate-700 text-center">
+                            <span class="text-[10px] uppercase font-black text-slate-400 tracking-wider block">Reducción CO₂</span>
+                            <span id="roi-res-co2" class="text-lg sm:text-xl font-extrabold text-emerald-400 block mt-0.5">0 t CO₂</span>
+                            <span class="text-[10px] text-slate-400 block mt-0.5">Emisiones evitadas/año</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- BUSCADOR PRINCIPAL -->
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4 mb-6 space-y-3">
+                <div class="relative w-full">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3.5 text-dexis-red text-sm"></i>
+                    <input type="text" id="search-query" oninput="handleSearchInput()" placeholder="Introduce referencia exacta (ej: ODE-3-240095-3F42, GA50T4009ABA, C300, ATV320, ACS580)..." 
+                           class="w-full bg-slate-50 border border-slate-300 rounded-lg pl-10 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-dexis-red font-semibold">
+                    
+                    <div id="autocomplete-dropdown" class="hidden absolute left-0 right-0 top-full mt-1 bg-white border border-slate-200 rounded-xl shadow-2xl z-40 max-h-60 overflow-y-auto divide-y divide-slate-100"></div>
+                </div>
+
+                <div class="flex items-center gap-2 flex-wrap text-xs">
+                    <button onclick="filterByBrand('Nidec')" class="bg-slate-100 hover:bg-dexis-red hover:text-white text-slate-700 font-bold px-2.5 py-1 rounded-md transition border border-slate-200">Nidec</button>
+                    <button onclick="filterByBrand('Parker')" class="bg-slate-100 hover:bg-dexis-red hover:text-white text-slate-700 font-bold px-2.5 py-1 rounded-md transition border border-slate-200">Parker</button>
+                    <button onclick="filterByBrand('Danfoss')" class="bg-slate-100 hover:bg-dexis-red hover:text-white text-slate-700 font-bold px-2.5 py-1 rounded-md transition border border-slate-200">Danfoss</button>
+                    <button onclick="filterByBrand('Schneider')" class="bg-slate-100 hover:bg-dexis-red hover:text-white text-slate-700 font-bold px-2.5 py-1 rounded-md transition border border-slate-200">Schneider</button>
+                    <button onclick="filterByBrand('Omron')" class="bg-slate-100 hover:bg-dexis-red hover:text-white text-slate-700 font-bold px-2.5 py-1 rounded-md transition border border-slate-200">Omron</button>
+                    <button onclick="filterByBrand('Yaskawa')" class="bg-slate-100 hover:bg-dexis-red hover:text-white text-slate-700 font-bold px-2.5 py-1 rounded-md transition border border-slate-200">Yaskawa</button>
+                    <button onclick="filterByBrand('ABB')" class="bg-slate-100 hover:bg-dexis-red hover:text-white text-slate-700 font-bold px-2.5 py-1 rounded-md transition border border-slate-200">ABB</button>
+                </div>
+
+                <div class="flex items-center justify-between border-t border-slate-100 pt-2">
+                    <span id="results-count" class="text-xs font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap">
+                        0 Equipos
+                    </span>
+                </div>
+            </div>
+
+            <div id="active-badges" class="flex flex-wrap gap-2 mb-4"></div>
+            
+            <!-- Contenedor Búsqueda On-line Dinámica -->
+            <div id="online-search-container" class="mb-6 hidden"></div>
+
+            <!-- Contenedor Coincidencia Exacta -->
+            <div id="exact-match-container" class="mb-6"></div>
+
+            <div id="results-heading" class="hidden font-extrabold text-xs text-slate-700 uppercase tracking-wider mb-3 pb-2 border-b border-slate-200">
+                Posibles Alternativas
+            </div>
+
+            <!-- Resultados -->
+            <div id="results-container" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+
+            <!-- Estado Vacío -->
+            <div id="empty-state" class="hidden bg-white rounded-xl border border-slate-200 p-12 text-center col-span-full">
+                <i class="fa-solid fa-boxes-triangle-flag text-4xl text-slate-300 mb-3"></i>
+                <h3 class="text-lg font-bold text-slate-700">Sin variadores compatibles en la base local</h3>
+                <p class="text-sm text-slate-500 max-w-md mx-auto mt-1">Prueba a ajustar la referencia o los términos de búsqueda introducidos.</p>
+                <div class="mt-4 flex flex-wrap justify-center gap-3">
+                    <button onclick="resetFilters()" class="bg-dexis-red text-white text-xs font-bold px-4 py-2 rounded-lg hover:bg-dexis-darkred transition">
+                        Restablecer Filtros
+                    </button>
+                    <button onclick="contactSupportNotFound()" class="bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold px-4 py-2 rounded-lg transition shadow inline-flex items-center space-x-2">
+                        <i class="fa-solid fa-envelope-open-text"></i>
+                        <span>¿No encuentras tu variador? Consultar Soporte Dexis</span>
+                    </button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- WIZARD MODAL -->
+    <div id="wizard-modal" class="fixed inset-0 z-50 hidden modal-backdrop flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-xl w-full overflow-hidden flex flex-col">
+            <div class="bg-slate-900 text-white px-6 py-4 flex items-center justify-between">
+                <div class="flex items-center space-x-2">
+                    <i class="fa-solid fa-wand-magic-sparkles text-amber-400 text-lg"></i>
+                    <h3 class="text-base font-extrabold">Asistente Guiado de Selección</h3>
+                </div>
+                <button onclick="closeModal('wizard-modal')" class="text-slate-400 hover:text-white text-xl">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <div class="p-6 space-y-6">
+                <div class="flex items-center justify-between text-xs font-extrabold border-b border-slate-200 pb-3">
+                    <span id="wiz-step-1-indicator" class="text-dexis-red">1. Aplicación</span>
+                    <i class="fa-solid fa-chevron-right text-slate-300 text-[10px]"></i>
+                    <span id="wiz-step-2-indicator" class="text-slate-400">2. Alimentación y Potencia</span>
+                    <i class="fa-solid fa-chevron-right text-slate-300 text-[10px]"></i>
+                    <span id="wiz-step-3-indicator" class="text-slate-400">3. Seguridad y Requisitos</span>
+                </div>
+
+                <div id="wiz-step-1" class="space-y-3">
+                    <label class="block text-xs font-extrabold uppercase text-slate-700 tracking-wider">
+                        ¿Qué tipo de máquina o carga va a mover el variador?
+                    </label>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                        <button onclick="selectWizardApp('hvac')" class="wiz-app-btn p-3 rounded-xl border border-slate-200 hover:border-dexis-red text-left font-semibold space-y-1 bg-slate-50 hover:bg-red-50/50">
+                            <i class="fa-solid fa-fan text-dexis-red text-base block mb-1"></i>
+                            <strong class="block text-slate-900">Bomba / Ventilador</strong>
+                            <span class="text-[11px] text-slate-500 block">Par variable (Leyes de Afinidad)</span>
+                        </button>
+
+                        <button onclick="selectWizardApp('conveyor')" class="wiz-app-btn p-3 rounded-xl border border-slate-200 hover:border-dexis-red text-left font-semibold space-y-1 bg-slate-50 hover:bg-red-50/50">
+                            <i class="fa-solid fa-conveyor-belt text-dexis-red text-base block mb-1"></i>
+                            <strong class="block text-slate-900">Cinta / Compresor / Trituradora</strong>
+                            <span class="text-[11px] text-slate-500 block">Par constante de proceso</span>
+                        </button>
+
+                        <button onclick="selectWizardApp('hoisting')" class="wiz-app-btn p-3 rounded-xl border border-slate-200 hover:border-dexis-red text-left font-semibold space-y-1 bg-slate-50 hover:bg-red-50/50">
+                            <i class="fa-solid fa-truck-ramp-box text-dexis-red text-base block mb-1"></i>
+                            <strong class="block text-slate-900">Grúa / Elevación</strong>
+                            <span class="text-[11px] text-slate-500 block">Alto par de arranque / Freno</span>
+                        </button>
+
+                        <button onclick="selectWizardApp('standard')" class="wiz-app-btn p-3 rounded-xl border border-slate-200 hover:border-dexis-red text-left font-semibold space-y-1 bg-slate-50 hover:bg-red-50/50">
+                            <i class="fa-solid fa-gears text-dexis-red text-base block mb-1"></i>
+                            <strong class="block text-slate-900">Maquinaria Estándar</strong>
+                            <span class="text-[11px] text-slate-500 block">Uso general / Máquina</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div id="wiz-step-2" class="hidden space-y-4">
+                    <div>
+                        <label class="block text-xs font-extrabold uppercase text-slate-700 tracking-wider mb-2">
+                            Tensión de Alimentación Disponible
+                        </label>
+                        <select id="wiz-voltage" class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2.5 text-xs font-bold text-slate-800">
+                            <option value="3x400" selected>Trifásico 3 x 400V / 480V (Red Industrial Estándar)</option>
+                            <option value="1x230">Monofásico 1 x 230V</option>
+                            <option value="3x230">Trifásico 3 x 230V</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-extrabold uppercase text-slate-700 tracking-wider mb-2">
+                            Potencia de Motor Estimada (kW)
+                        </label>
+                        <div class="flex items-center space-x-2">
+                            <input type="number" id="wiz-power" step="0.1" value="7.5" min="0.1" max="500" 
+                                   class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2.5 text-sm font-bold text-slate-900">
+                            <span class="font-extrabold text-slate-500 text-xs">kW</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="wiz-step-3" class="hidden space-y-4 text-xs">
+                    <label class="block text-xs font-extrabold uppercase text-slate-700 tracking-wider">
+                        Requisitos Especiales y Seguridad
+                    </label>
+                    <div class="space-y-2">
+                        <label class="flex items-center space-x-2.5 p-2.5 border border-slate-200 rounded-lg cursor-pointer bg-slate-50 hover:bg-slate-100">
+                            <input type="checkbox" id="wiz-sto" class="rounded text-dexis-red focus:ring-dexis-red" checked>
+                            <div>
+                                <strong class="block text-slate-900">Paro de Seguridad STO (Safe Torque Off)</strong>
+                                <span class="text-[11px] text-slate-500">Requerido en la mayoría de normativas de seguridad actuales.</span>
+                            </div>
+                        </label>
+
+                        <label class="flex items-center space-x-2.5 p-2.5 border border-slate-200 rounded-lg cursor-pointer bg-slate-50 hover:bg-slate-100">
+                            <input type="checkbox" id="wiz-closed-loop" class="rounded text-dexis-red focus:ring-dexis-red">
+                            <div>
+                                <strong class="block text-slate-900">Lazo Cerrado con Encoder</strong>
+                                <span class="text-[11px] text-slate-500">Alta precisión de posicionamiento y par a cero velocidad.</span>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-slate-100 px-6 py-3 border-t border-slate-200 flex justify-between items-center">
+                <button id="wiz-prev-btn" onclick="prevWizardStep()" class="hidden px-4 py-2 rounded-lg bg-slate-300 hover:bg-slate-400 text-slate-800 text-xs font-bold transition">
+                    Anterior
+                </button>
+                <div class="ml-auto flex items-center space-x-2">
+                    <button id="wiz-next-btn" onclick="nextWizardStep()" class="px-4 py-2 rounded-lg bg-dexis-red hover:bg-dexis-darkred text-white text-xs font-bold transition shadow">
+                        Siguiente
+                    </button>
+                    <button id="wiz-apply-btn" onclick="finishWizard()" class="hidden px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition shadow">
+                        Ver Recomendaciones
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- DETAIL MODAL -->
+    <div id="detail-modal" class="fixed inset-0 z-50 hidden modal-backdrop flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] flex flex-col overflow-hidden">
+            <div class="bg-slate-900 text-white px-6 py-4 flex items-center justify-between">
+                <div>
+                    <span id="modal-brand-badge" class="inline-block px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-dexis-red">Marca</span>
+                    <h3 id="modal-title" class="text-xl font-bold mt-1">Modelo</h3>
+                </div>
+                <button onclick="closeModal('detail-modal')" class="text-slate-400 hover:text-white text-xl">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <div id="modal-body" class="p-6 overflow-y-auto space-y-6"></div>
+            <div class="bg-slate-50 px-6 py-3 border-t border-slate-200 flex justify-between items-center flex-wrap gap-2">
+                <button id="modal-discount-btn" onclick="consultDiscount('','','',0,null)" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-2 rounded-lg text-xs font-bold transition flex items-center space-x-1.5 shadow">
+                    <i class="fa-solid fa-envelope"></i>
+                    <span>Consultar Precio y Descuento por Email</span>
+                </button>
+                <button onclick="closeModal('detail-modal')" class="bg-slate-800 text-white px-4 py-2 rounded-lg text-xs font-bold hover:bg-slate-700">
+                    Cerrar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- COMPARE MODAL -->
+    <div id="compare-modal" class="fixed inset-0 z-50 hidden modal-backdrop flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-6xl w-full max-h-[90vh] flex flex-col overflow-hidden">
+            <div class="bg-slate-900 text-white px-6 py-4 flex items-center justify-between flex-wrap gap-3">
+                <div class="flex items-center space-x-4 flex-wrap gap-2">
+                    <h3 class="text-base font-bold flex items-center gap-2">
+                        <i class="fa-solid fa-scale-balanced text-sky-400"></i> Tabla Comparativa Técnica (<span id="compare-modal-count">0</span> referencias)
+                    </h3>
+                    
+                    <label class="flex items-center space-x-2 text-xs font-medium cursor-pointer bg-slate-800 px-3 py-1 rounded-lg border border-slate-700">
+                        <input type="checkbox" id="toggle-highlight-diffs" onchange="renderCompareTable()" class="rounded text-amber-400 focus:ring-amber-400">
+                        <span class="text-amber-300 font-bold">Resaltar Diferencias</span>
+                    </label>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <button onclick="copyCompareSummaryToClipboard()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center space-x-1.5 shadow" title="Copiar informe en texto para email">
+                        <i class="fa-solid fa-copy"></i>
+                        <span class="hidden sm:inline">Copiar Texto</span>
+                    </button>
+                    <button onclick="emailCompareReport()" class="bg-amber-500 hover:bg-amber-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center space-x-1.5 shadow" title="Enviar comparativa por correo electrónico">
+                        <i class="fa-solid fa-paper-plane"></i>
+                        <span class="hidden sm:inline">Enviar por Email</span>
+                    </button>
+                    <button onclick="printCompareTable()" class="bg-sky-600 hover:bg-sky-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center space-x-1.5 shadow" title="Imprimir o exportar PDF de la comparativa">
+                        <i class="fa-solid fa-file-pdf"></i>
+                        <span>Imprimir / PDF</span>
+                    </button>
+                    <button onclick="closeModal('compare-modal')" class="text-slate-400 hover:text-white text-xl pl-2">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+            </div>
+            <div id="compare-modal-body" class="p-6 overflow-y-auto space-y-4"></div>
+            <div class="bg-slate-100 px-6 py-3 border-t border-slate-200 flex justify-between items-center">
+                <button onclick="clearComparison()" class="text-xs font-bold text-rose-600 hover:underline flex items-center gap-1">
+                    <i class="fa-solid fa-trash"></i> Vaciar Comparación
+                </button>
+                <button onclick="closeModal('compare-modal')" class="px-4 py-1.5 rounded bg-slate-800 text-white text-xs font-bold hover:bg-slate-700 transition">
+                    Cerrar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- TOAST NOTIFICATION -->
+    <div id="toast" class="fixed bottom-5 right-5 z-50 transform translate-y-20 opacity-0 transition-all duration-300 bg-slate-900 text-white px-4 py-3 rounded-xl shadow-xl flex items-center space-x-3 border border-slate-700">
+        <i id="toast-icon" class="fa-solid fa-circle-check text-emerald-400 text-lg"></i>
+        <span id="toast-message" class="text-xs font-semibold">Mensaje de notificación</span>
+    </div>
+
+    <!-- APPLICATION LOGIC & CATALOG DATABASE -->
+    <script>
+        const DEFAULT_CATALOG = [
+            // 1. YASKAWA
+            {
+                id: "yaskawa-ga500", brand: "Yaskawa", model: "GA500 Series",
+                powerMin: 0.2, powerMax: 30.0, warranty: "2 Años (Garantía Oficial Yaskawa Electric)", voltages: ["1x230", "3x230", "3x400"], page: "GA500",
+                description: "Variador industrial compacto con tecnología vectorial avanzada, función de seguridad STO SIL3/PLe integrada de serie, conectividad inalámbrica Bluetooth/USB y soporte para motores de inducción y de imán permanente (PM).",
+                functionsCount: ">80", presetSpeeds: 16, aiCount: 2, diCount: 7, aoCount: 1, doCount: 1, relays: 2,
+                nativeComm: ["Modbus RTU", "USB Config"], optionalComm: ["Profinet", "EtherNet/IP", "EtherCAT", "CANopen", "Profibus DP"], encoderSupport: false, safety: true, safetyDetail: "STO SIL3 / PLe Integrado", plcInternal: true, nfcSupport: true, isObsolete: false,
+                applications: { hvac: true, compressor_light: true, compressor_heavy: true, conveyor: true, hoisting: false, high_perf: true, standard: true },
+                references: [
+                    { refFab: "GA50T2002ABA", shortDesc: "GA500 1x230V 0.37kW (2.1A) STO SIL3 IP20", supply: "1x230", kw: 0.37, current: 2.1, ip: 20, pvp: null },
+                    { refFab: "GA50T2004ABA", shortDesc: "GA500 1x230V 0.75kW (3.6A) STO SIL3 IP20", supply: "1x230", kw: 0.75, current: 3.6, ip: 20, pvp: null },
+                    { refFab: "GA50T2008ABA", shortDesc: "GA500 1x230V 1.5kW (7.1A) STO SIL3 IP20", supply: "1x230", kw: 1.5, current: 7.1, ip: 20, pvp: null },
+                    { refFab: "GA50T4002ABA", shortDesc: "GA500 3x400V 0.75kW (2.1A) STO SIL3 IP20", supply: "3x400", kw: 0.75, current: 2.1, ip: 20, pvp: null },
+                    { refFab: "GA50T4004ABA", shortDesc: "GA500 3x400V 1.5kW (4.1A) STO SIL3 IP20", supply: "3x400", kw: 1.5, current: 4.1, ip: 20, pvp: null },
+                    { refFab: "GA50T4009ABA", shortDesc: "GA500 3x400V 4.0kW (9.2A) STO SIL3 IP20", supply: "3x400", kw: 4.0, current: 9.2, ip: 20, pvp: null },
+                    { refFab: "GA50T4018ABA", shortDesc: "GA500 3x400V 7.5kW (17.5A) STO SIL3 IP20", supply: "3x400", kw: 7.5, current: 17.5, ip: 20, pvp: null },
+                    { refFab: "GA50T4023ABA", shortDesc: "GA500 3x400V 11kW (23.0A) STO SIL3 IP20", supply: "3x400", kw: 11.0, current: 23.0, ip: 20, pvp: null },
+                    { refFab: "GA50T4031ABA", shortDesc: "GA500 3x400V 15kW (31.0A) STO SIL3 IP20", supply: "3x400", kw: 15.0, current: 31.0, ip: 20, pvp: null },
+                    { refFab: "GA50T4044ABA", shortDesc: "GA500 3x400V 22kW (44.0A) STO SIL3 IP20", supply: "3x400", kw: 22.0, current: 44.0, ip: 20, pvp: null },
+                    { refFab: "GA50T4060ABA", shortDesc: "GA500 3x400V 30kW (60.0A) STO SIL3 IP20", supply: "3x400", kw: 30.0, current: 60.0, ip: 20, pvp: null }
+                ]
+            },
+            {
+                id: "yaskawa-ga700", brand: "Yaskawa", model: "GA700 Series",
+                powerMin: 0.55, powerMax: 315.0, warranty: "2 Años (Garantía Oficial Yaskawa Electric)", voltages: ["3x400"], page: "GA700",
+                description: "Variador de alta gama para aplicaciones industriales exigentes con control vectorial en lazo abierto y cerrado. Compatible con motores asíncronos, de imán permanente (PM) y reluctancia síncrona (SynRM). STO SIL3/PLe integrada.",
+                functionsCount: ">150", presetSpeeds: 16, aiCount: 3, diCount: 8, aoCount: 2, doCount: 2, relays: 3,
+                nativeComm: ["Modbus RTU"], optionalComm: ["Profinet", "EtherNet/IP", "EtherCAT", "CANopen", "Profibus DP"], encoderSupport: true, safety: true, safetyDetail: "STO SIL3 / PLe Integrado", plcInternal: true, nfcSupport: false, isObsolete: false,
+                applications: { hvac: true, compressor_light: true, compressor_heavy: true, conveyor: true, hoisting: true, high_perf: true, standard: true },
+                references: [
+                    { refFab: "GA70T4002ABA", shortDesc: "GA700 3x400V 0.75kW (2.1A) STO SIL3 High-Perf", supply: "3x400", kw: 0.75, current: 2.1, ip: 20, pvp: null },
+                    { refFab: "GA70T4009ABA", shortDesc: "GA700 3x400V 4.0kW (9.2A) STO SIL3 High-Perf", supply: "3x400", kw: 4.0, current: 9.2, ip: 20, pvp: null },
+                    { refFab: "GA70T4018ABA", shortDesc: "GA700 3x400V 7.5kW (17.5A) STO SIL3 High-Perf", supply: "3x400", kw: 7.5, current: 17.5, ip: 20, pvp: null },
+                    { refFab: "GA70T4031ABA", shortDesc: "GA700 3x400V 15kW (31.0A) STO SIL3 High-Perf", supply: "3x400", kw: 15.0, current: 31.0, ip: 20, pvp: null },
+                    { refFab: "GA70T4044ABA", shortDesc: "GA700 3x400V 22kW (44.0A) STO SIL3 High-Perf", supply: "3x400", kw: 22.0, current: 44.0, ip: 20, pvp: null },
+                    { refFab: "GA70T4075ABA", shortDesc: "GA700 3x400V 37kW (75.0A) STO SIL3 High-Perf", supply: "3x400", kw: 37.0, current: 75.0, ip: 20, pvp: null },
+                    { refFab: "GA70T4112ABA", shortDesc: "GA700 3x400V 55kW (112A) STO SIL3 High-Perf", supply: "3x400", kw: 55.0, current: 112.0, ip: 20, pvp: null }
+                ]
+            },
+
+            // 2. NIDEC
+            {
+                id: "nidec-c300", brand: "Nidec", model: "Commander C300",
+                powerMin: 0.37, powerMax: 132.0, warranty: "5 Años (Garantía Oficial Nidec Control Techniques)", voltages: ["3x400"], page: "13",
+                description: "Variador eficiente y fiable con STO dual integrada. PLC interno programable en CoDeSys. Transistor de frenado y control PID avanzado.",
+                functionsCount: "<80", presetSpeeds: 8, aiCount: 2, diCount: 5, aoCount: 2, doCount: 1, relays: 1,
+                nativeComm: ["Modbus RTU"], optionalComm: ["EtherCAT", "Profinet", "Modbus TCP", "Profibus DP"], encoderSupport: false, safety: true, safetyDetail: "STO Dual SIL3/PLe", plcInternal: true, nfcSupport: false, isObsolete: false,
+                applications: { hvac: true, compressor_light: true, compressor_heavy: true, conveyor: true, hoisting: false, high_perf: true, standard: true },
+                references: [
+                    { refFab: "C300-02400023A10100AB100", shortDesc: "C300 3x400V 0.75kW (2.3A)", supply: "3x400", kw: 0.75, current: 2.3, ip: 20, pvp: 696.37 },
+                    { refFab: "C300-02400041A10100AB100", shortDesc: "C300 3x400V 1.5kW (4.1A)", supply: "3x400", kw: 1.5, current: 4.1, ip: 20, pvp: 808.29 },
+                    { refFab: "C300-03400056A10100AB100", shortDesc: "C300 3x400V 2.2kW (5.6A)", supply: "3x400", kw: 2.2, current: 5.6, ip: 20, pvp: 920.21 },
+                    { refFab: "C300-03400094A10100AB100", shortDesc: "C300 3x400V 4.0kW (9.4A)", supply: "3x400", kw: 4.0, current: 9.4, ip: 20, pvp: 1091.19 },
+                    { refFab: "C300-04400170A10100AB100", shortDesc: "C300 3x400V 7.5kW (17.0A)", supply: "3x400", kw: 7.5, current: 17.0, ip: 20, pvp: 1606.22 },
+                    { refFab: "C300-05400270A10100AB100", shortDesc: "C300 3x400V 11kW (27.0A)", supply: "3x400", kw: 11.0, current: 27.0, ip: 20, pvp: 2318.13 },
+                    { refFab: "C300-05400300A10100AB100", shortDesc: "C300 3x400V 15kW (30.0A)", supply: "3x400", kw: 15.0, current: 30.0, ip: 20, pvp: 2730.57 },
+                    { refFab: "C300-06400420A10100AB100", shortDesc: "C300 3x400V 22kW (42.0A)", supply: "3x400", kw: 22.0, current: 42.0, ip: 20, pvp: 3320.21 },
+                    { refFab: "C300-06400470A10100AB100", shortDesc: "C300 3x400V 30kW (47.0A)", supply: "3x400", kw: 30.0, current: 47.0, ip: 20, pvp: 4183.42 },
+                    { refFab: "C300-07400660A10100AB100", shortDesc: "C300 3x400V 37kW (66.0A)", supply: "3x400", kw: 37.0, current: 66.0, ip: 20, pvp: 5378.24 },
+                    { refFab: "C300-07400770A10100AB100", shortDesc: "C300 3x400V 45kW (77.0A)", supply: "3x400", kw: 45.0, current: 77.0, ip: 20, pvp: 5861.14 },
+                    { refFab: "C300-08401340A10100AB100", shortDesc: "C300 3x400V 55kW (110A)", supply: "3x400", kw: 55.0, current: 110.0, ip: 20, pvp: 7850.00 }
+                ]
+            },
+            {
+                id: "nidec-commander-s", brand: "Nidec", model: "Commander S / S100",
+                powerMin: 0.18, powerMax: 11.0, warranty: "5 Años (Garantía Oficial Nidec Control Techniques)", voltages: ["1x230", "3x230", "3x400"], page: "12",
+                description: "Variadores de baja tensión orientados a máquina con tecnología NFC de serie. Puesta en marcha ultra rápida en 60s mediante la App Marshal.",
+                functionsCount: "<20", presetSpeeds: 4, aiCount: 2, diCount: 4, aoCount: 1, doCount: 1, relays: 1,
+                nativeComm: ["Modbus RTU", "NFC App"], optionalComm: [], encoderSupport: false, safety: false, safetyDetail: "NO", plcInternal: false, nfcSupport: true, isObsolete: false,
+                applications: { hvac: true, compressor_light: true, compressor_heavy: false, conveyor: false, hoisting: false, high_perf: false, standard: true },
+                references: [
+                    { refFab: "S100-01S33-0A0000", shortDesc: "Commander S 1x230V 0.37kW (2.4A) IP20 C1", supply: "1x230", kw: 0.37, current: 2.4, ip: 20, pvp: 261.14 },
+                    { refFab: "S100-01S53-0A0000", shortDesc: "Commander S 1x230V 0.75kW (4.6A) IP20 C1", supply: "1x230", kw: 0.75, current: 4.6, ip: 20, pvp: 301.55 },
+                    { refFab: "S100-01D73-0A0000", shortDesc: "Commander S 1x230V 1.5kW (7.5A) IP20 C1", supply: "1x230", kw: 1.5, current: 7.5, ip: 20, pvp: 442.49 },
+                    { refFab: "S100-02433-0A0000", shortDesc: "Commander S 3x400V 0.75kW (2.2A) IP20 C3", supply: "3x400", kw: 0.75, current: 2.2, ip: 20, pvp: 465.28 },
+                    { refFab: "S100-02453-0A0000", shortDesc: "Commander S 3x400V 1.5kW (3.7A) IP20 C3", supply: "3x400", kw: 1.5, current: 3.7, ip: 20, pvp: 568.91 },
+                    { refFab: "S100-03423-0A0000", shortDesc: "Commander S 3x400V 4.0kW (8.8A) IP20 C3", supply: "3x400", kw: 4.0, current: 8.8, ip: 20, pvp: 830.05 }
+                ]
+            },
+            {
+                id: "nidec-f600", brand: "Nidec", model: "F600 Pump Drive Series",
+                powerMin: 1.1, powerMax: 280.0, warranty: "5 Años (Garantía Oficial Nidec Control Techniques)", voltages: ["3x230", "3x400", "3x575", "3x690"], page: "F600",
+                description: "Variador especializado para bombeo y gestión de agua. Display KI-HOA-RT y STO SIL2/PLd de serie.",
+                functionsCount: ">100", presetSpeeds: 16, aiCount: 2, diCount: 6, aoCount: 2, doCount: 1, relays: 3,
+                nativeComm: ["Modbus RTU"], optionalComm: ["Profinet", "EtherCAT", "EtherNet/IP"], encoderSupport: true, safety: true, safetyDetail: "STO SIL2 / PLd Integrado", plcInternal: true, nfcSupport: false, isObsolete: false,
+                references: [
+                    { refFab: "F600-04400185A10100AB103", shortDesc: "F600 3x400V 7.5kW (18.5A) KI-HOA-RT STO", supply: "3x400", kw: 7.5, current: 18.5, ip: 20, pvp: 1530.00 },
+                    { refFab: "F600-05400300A10100AB103", shortDesc: "F600 3x400V 15kW (30.0A) KI-HOA-RT STO", supply: "3x400", kw: 15.0, current: 30.0, ip: 20, pvp: 2370.00 },
+                    { refFab: "F600-06400470A10100AB103", shortDesc: "F600 3x400V 22kW (47.0A) KI-HOA-RT STO", supply: "3x400", kw: 22.0, current: 47.0, ip: 20, pvp: 3120.00 },
+                    { refFab: "F600-06400660A10100AB103", shortDesc: "F600 3x400V 30kW (66.0A) KI-HOA-RT STO", supply: "3x400", kw: 30.0, current: 66.0, ip: 20, pvp: 3950.00 },
+                    { refFab: "F600-07400770A10100AB103", shortDesc: "F600 3x400V 37kW (77.0A) KI-HOA-RT STO", supply: "3x400", kw: 37.0, current: 77.0, ip: 20, pvp: 4890.00 },
+                    { refFab: "F600-07400940A10100AB103", shortDesc: "F600 3x400V 45kW (94.0A) KI-HOA-RT STO", supply: "3x400", kw: 45.0, current: 94.0, ip: 20, pvp: 5650.00 },
+                    { refFab: "F600-08401340A10100AB103", shortDesc: "F600 3x400V 55kW (110A) KI-HOA-RT STO", supply: "3x400", kw: 55.0, current: 110.0, ip: 20, pvp: 6850.00 }
+                ]
+            },
+
+            // 3. PARKER
+            {
+                id: "parker-ac15", brand: "Parker", model: "AC15 Series",
+                powerMin: 0.37, powerMax: 55.0, warranty: "2 Años (Garantía Oficial Parker Hannifin)", voltages: ["1x230", "3x400"], page: "AC15",
+                description: "Variador compacto de uso general Parker AC15 para control de motores asíncronos y PMAC en lazo abierto. STO SIL2/PLd.",
+                functionsCount: ">40", presetSpeeds: 8, aiCount: 2, diCount: 4, aoCount: 1, doCount: 1, relays: 1,
+                nativeComm: ["Modbus RTU"], optionalComm: [], encoderSupport: false, safety: true, safetyDetail: "STO SIL2 / PLd", plcInternal: false, nfcSupport: false, isObsolete: false,
+                references: [
+                    { refFab: "15G-11-0040-BN", shortDesc: "AC15 1x230V 0.75kW (4.0A) STO IP20", supply: "1x230", kw: 0.75, current: 4.0, ip: 20, pvp: null },
+                    { refFab: "15G-41-0022-BN", shortDesc: "AC15 3x400V 0.75kW (2.2A) STO IP20", supply: "3x400", kw: 0.75, current: 2.2, ip: 20, pvp: null },
+                    { refFab: "15G-41-0090-BN", shortDesc: "AC15 3x400V 4.0kW (9.0A) STO IP20", supply: "3x400", kw: 4.0, current: 9.0, ip: 20, pvp: null },
+                    { refFab: "15G-41-0230-BN", shortDesc: "AC15 3x400V 11kW (23.0A) STO IP20", supply: "3x400", kw: 11.0, current: 23.0, ip: 20, pvp: null },
+                    { refFab: "15G-41-0300-BN", shortDesc: "AC15 3x400V 15kW (30.0A) STO IP20", supply: "3x400", kw: 15.0, current: 30.0, ip: 20, pvp: null },
+                    { refFab: "15G-41-0450-BN", shortDesc: "AC15 3x400V 22kW (45.0A) STO IP20", supply: "3x400", kw: 22.0, current: 45.0, ip: 20, pvp: null },
+                    { refFab: "15G-41-0600-BN", shortDesc: "AC15 3x400V 30kW (60.0A) STO IP20", supply: "3x400", kw: 30.0, current: 60.0, ip: 20, pvp: null },
+                    { refFab: "15G-41-0870-BN", shortDesc: "AC15 3x400V 45kW (87.0A) STO IP20", supply: "3x400", kw: 45.0, current: 87.0, ip: 20, pvp: null },
+                    { refFab: "15G-41-1050-BN", shortDesc: "AC15 3x400V 55kW (105A) STO IP20", supply: "3x400", kw: 55.0, current: 105.0, ip: 20, pvp: null }
+                ]
+            },
+            {
+                id: "parker-ac20", brand: "Parker", model: "AC20 Series",
+                powerMin: 0.37, powerMax: 180.0, warranty: "2 Años (Garantía Oficial Parker Hannifin)", voltages: ["1x230", "3x230", "3x400"], page: "AC20",
+                description: "Variador compacto avanzado Parker AC20 con Ethernet IP / Modbus TCP nativos, opciones para Profinet, EtherCAT y CANopen. STO SIL2/PLd.",
+                functionsCount: ">80", presetSpeeds: 16, aiCount: 2, diCount: 6, aoCount: 2, doCount: 1, relays: 1,
+                nativeComm: ["Modbus RTU", "EtherNet/IP", "Modbus TCP"], optionalComm: ["Profinet", "EtherCAT", "CANopen"], encoderSupport: true, safety: true, safetyDetail: "STO SIL2 / PLd", plcInternal: true, nfcSupport: false, isObsolete: false,
+                references: [
+                    { refFab: "20G-41-0022-BN", shortDesc: "AC20 3x400V 0.75kW (2.2A) STO IP20", supply: "3x400", kw: 0.75, current: 2.2, ip: 20, pvp: null },
+                    { refFab: "20G-41-0090-BN", shortDesc: "AC20 3x400V 4.0kW (9.0A) STO IP20", supply: "3x400", kw: 4.0, current: 9.0, ip: 20, pvp: null },
+                    { refFab: "20G-41-0230-BN", shortDesc: "AC20 3x400V 11kW (23.0A) STO IP20", supply: "3x400", kw: 11.0, current: 23.0, ip: 20, pvp: null },
+                    { refFab: "20G-41-0300-BN", shortDesc: "AC20 3x400V 15kW (30.0A) STO IP20", supply: "3x400", kw: 15.0, current: 30.0, ip: 20, pvp: null },
+                    { refFab: "20G-41-0450-BN", shortDesc: "AC20 3x400V 22kW (45.0A) STO IP20", supply: "3x400", kw: 22.0, current: 45.0, ip: 20, pvp: null },
+                    { refFab: "20G-41-0600-BN", shortDesc: "AC20 3x400V 30kW (60.0A) STO IP20", supply: "3x400", kw: 30.0, current: 60.0, ip: 20, pvp: null },
+                    { refFab: "20G-41-0870-BN", shortDesc: "AC20 3x400V 45kW (87.0A) STO IP20", supply: "3x400", kw: 45.0, current: 87.0, ip: 20, pvp: null },
+                    { refFab: "20G-41-0106-BN", shortDesc: "AC20 3x400V 55kW (106A) STO IP20", supply: "3x400", kw: 55.0, current: 106.0, ip: 20, pvp: null }
+                ]
+            },
+            {
+                id: "parker-ac30", brand: "Parker", model: "AC30 Series",
+                powerMin: 0.75, powerMax: 450.0, warranty: "2 Años (Garantía Oficial Parker Hannifin)", voltages: ["3x400", "3x690"], page: "AC30",
+                description: "Variador modular de altas prestaciones Parker AC30 (0.75 a 450 kW) para lazo abierto y cerrado. STO SIL2/PLd y PLC CoDeSys.",
+                functionsCount: ">150", presetSpeeds: 16, aiCount: 2, diCount: 8, aoCount: 3, doCount: 2, relays: 2,
+                nativeComm: ["Modbus RTU", "EtherNet/IP", "Modbus TCP"], optionalComm: ["Profibus DPV1", "Profinet", "EtherCAT", "CANopen"], encoderSupport: true, safety: true, safetyDetail: "STO SIL2 / PLd", plcInternal: true, nfcSupport: false, isObsolete: false,
+                references: [
+                    { refFab: "31V-4D0004-BF-0N-0S-0000", shortDesc: "AC30 3x400V 0.75kW HD (1.4A) STO", supply: "3x400", kw: 0.75, current: 1.4, ip: 20, pvp: null },
+                    { refFab: "31V-4E0023-BF-0N-0S-0000", shortDesc: "AC30 3x400V 7.5kW HD (16.0A) STO", supply: "3x400", kw: 7.5, current: 16.0, ip: 20, pvp: null },
+                    { refFab: "31V-4F0038-BF-0N-0S-0000", shortDesc: "AC30 3x400V 18.5kW HD (38.0A) STO", supply: "3x400", kw: 18.5, current: 38.0, ip: 20, pvp: null },
+                    { refFab: "31V-4F0045-BF-0N-0S-0000", shortDesc: "AC30 3x400V 22kW HD (45.0A) STO", supply: "3x400", kw: 22.0, current: 45.0, ip: 20, pvp: null },
+                    { refFab: "31V-4G0060-BF-0N-0S-0000", shortDesc: "AC30 3x400V 30kW HD (60.0A) STO", supply: "3x400", kw: 30.0, current: 60.0, ip: 20, pvp: null },
+                    { refFab: "31V-4G0073-BF-0N-0S-0000", shortDesc: "AC30 3x400V 37kW HD (73.0A) STO", supply: "3x400", kw: 37.0, current: 73.0, ip: 20, pvp: null },
+                    { refFab: "31V-4H0087-BF-0N-0S-0000", shortDesc: "AC30 3x400V 45kW HD (87.0A) STO", supply: "3x400", kw: 45.0, current: 87.0, ip: 20, pvp: null },
+                    { refFab: "31V-4H0105-BF-0N-0S-0000", shortDesc: "AC30 3x400V 55kW HD (105A) STO", supply: "3x400", kw: 55.0, current: 105.0, ip: 20, pvp: null }
+                ]
+            },
+
+            // 4. DANFOSS
+            {
+                id: "danfoss-vacon-100-flow", brand: "Danfoss", model: "VACON® 100 FLOW",
+                powerMin: 0.55, powerMax: 630.0, warranty: "2 Años (Garantía Oficial Danfoss Drives)", voltages: ["3x400", "3x690"], page: "Vacon 100",
+                description: "Variador de frecuencia optimizado para control de flujo y bombas. Multipomba integrada, RTC y Modbus TCP/Ethernet IP de serie.",
+                functionsCount: ">120", presetSpeeds: 16, aiCount: 2, diCount: 6, aoCount: 2, doCount: 1, relays: 3,
+                nativeComm: ["Modbus RTU", "Modbus TCP", "EtherNet/IP", "BACnet IP"], optionalComm: ["Profibus DPV1", "Profinet"], encoderSupport: false, safety: true, safetyDetail: "STO SIL3 / PLe", plcInternal: true, nfcSupport: false, isObsolete: false,
+                references: [
+                    { refFab: "VACON100-0004-3", shortDesc: "VACON 100 FLOW 3x400V 0.75kW (2.2A) STO", supply: "3x400", kw: 0.75, current: 2.2, ip: 21, pvp: null },
+                    { refFab: "VACON100-0009-3", shortDesc: "VACON 100 FLOW 3x400V 4.0kW (9.0A) STO", supply: "3x400", kw: 4.0, current: 9.0, ip: 21, pvp: null },
+                    { refFab: "VACON100-0016-3", shortDesc: "VACON 100 FLOW 3x400V 7.5kW (16.0A) STO", supply: "3x400", kw: 7.5, current: 16.0, ip: 21, pvp: null },
+                    { refFab: "VACON100-0038-3", shortDesc: "VACON 100 FLOW 3x400V 18.5kW (38.0A) STO", supply: "3x400", kw: 18.5, current: 38.0, ip: 21, pvp: null },
+                    { refFab: "VACON100-0048-3", shortDesc: "VACON 100 FLOW 3x400V 22kW (48.0A) STO", supply: "3x400", kw: 22.0, current: 48.0, ip: 21, pvp: null },
+                    { refFab: "VACON100-0061-3", shortDesc: "VACON 100 FLOW 3x400V 30kW (61.0A) STO", supply: "3x400", kw: 30.0, current: 61.0, ip: 21, pvp: null },
+                    { refFab: "VACON100-0072-3", shortDesc: "VACON 100 FLOW 3x400V 37kW (72.0A) STO", supply: "3x400", kw: 37.0, current: 72.0, ip: 21, pvp: null },
+                    { refFab: "VACON100-0087-3", shortDesc: "VACON 100 FLOW 3x400V 45kW (87.0A) STO", supply: "3x400", kw: 45.0, current: 87.0, ip: 21, pvp: null },
+                    { refFab: "VACON100-0105-3", shortDesc: "VACON 100 FLOW 3x400V 55kW (105A) STO", supply: "3x400", kw: 55.0, current: 105.0, ip: 21, pvp: null }
+                ]
+            },
+            {
+                id: "danfoss-ic2", brand: "Danfoss", model: "iC2-Micro Series",
+                powerMin: 0.37, powerMax: 22.0, warranty: "2 Años (Garantía Oficial Danfoss Drives)", voltages: ["1x230", "3x230", "3x400"], page: "1-10",
+                description: "Sustituto oficial directo de la serie descatalogada Danfoss VLT® Micro Drive FC 51. STO SIL3/PLe de serie.",
+                functionsCount: ">80", presetSpeeds: 16, aiCount: 2, diCount: 5, aoCount: 1, doCount: 1, relays: 1,
+                nativeComm: ["Modbus RTU", "FC-Bus"], optionalComm: ["Profinet"], encoderSupport: false, safety: true, safetyDetail: "STO SIL3 / PLe", plcInternal: true, nfcSupport: false, isObsolete: false,
+                references: [
+                    { refFab: "132L6103", shortDesc: "iC2-Micro 1x230V 0.75kW (4.2A) STO (Sustituto FC 51)", supply: "1x230", kw: 0.75, current: 4.2, ip: 20, pvp: null },
+                    { refFab: "132L6117", shortDesc: "iC2-Micro 3x400V 0.75kW (2.2A) STO (Sustituto FC 51)", supply: "3x400", kw: 0.75, current: 2.2, ip: 20, pvp: null },
+                    { refFab: "132L6121", shortDesc: "iC2-Micro 3x400V 4.0kW (9.0A) STO (Sustituto FC 51)", supply: "3x400", kw: 4.0, current: 9.0, ip: 20, pvp: null },
+                    { refFab: "132L6130", shortDesc: "iC2-Micro 3x400V 11kW (23.0A) STO (Sustituto FC 51)", supply: "3x400", kw: 11.0, current: 23.0, ip: 20, pvp: null },
+                    { refFab: "132L6135", shortDesc: "iC2-Micro 3x400V 15kW (31.0A) STO (Sustituto FC 51)", supply: "3x400", kw: 15.0, current: 31.0, ip: 20, pvp: null },
+                    { refFab: "132L6140", shortDesc: "iC2-Micro 3x400V 22kW (43.0A) STO (Sustituto FC 51)", supply: "3x400", kw: 22.0, current: 43.0, ip: 20, pvp: null }
+                ]
+            },
+            {
+                id: "danfoss-fc51-obsolete", brand: "Danfoss", model: "VLT® Micro Drive FC 51 (OBSOLETO)",
+                powerMin: 0.18, powerMax: 22.0, warranty: "Descatalogado / Sin Garantía Oficial", voltages: ["1x230", "3x400"], page: "FC51",
+                description: "Serie clásica Danfoss VLT Micro Drive FC 51. EQUIPO OBSOLETO / DESCATALOGADO. El sustituto directo recomendado en producción es la gama Danfoss iC2-Micro.",
+                functionsCount: "<40", presetSpeeds: 8, aiCount: 2, diCount: 5, aoCount: 1, doCount: 1, relays: 1,
+                nativeComm: ["Modbus RTU", "FC-Bus"], optionalComm: [], encoderSupport: false, safety: false, safetyDetail: "NO", plcInternal: false, nfcSupport: false, isObsolete: true, replacementModel: "Danfoss iC2-Micro",
+                references: [
+                    { refFab: "132F0001", shortDesc: "FC 51 1x230V 0.18kW (1.2A) IP20 (OBSOLETO - Usar iC2-Micro)", supply: "1x230", kw: 0.18, current: 1.2, ip: 20, pvp: null },
+                    { refFab: "132F0002", shortDesc: "FC 51 1x230V 0.37kW (2.2A) IP20 (OBSOLETO - Usar iC2-Micro)", supply: "1x230", kw: 0.37, current: 2.2, ip: 20, pvp: null },
+                    { refFab: "132F0003", shortDesc: "FC 51 1x230V 0.75kW (4.2A) IP20 (OBSOLETO - Usar iC2-Micro)", supply: "1x230", kw: 0.75, current: 4.2, ip: 20, pvp: null },
+                    { refFab: "132F0017", shortDesc: "FC 51 3x400V 0.37kW (1.2A) IP20 (OBSOLETO - Usar iC2-Micro)", supply: "3x400", kw: 0.37, current: 1.2, ip: 20, pvp: null },
+                    { refFab: "132F0018", shortDesc: "FC 51 3x400V 0.75kW (2.2A) IP20 (OBSOLETO - Usar iC2-Micro)", supply: "3x400", kw: 0.75, current: 2.2, ip: 20, pvp: null },
+                    { refFab: "132F0022", shortDesc: "FC 51 3x400V 4.0kW (9.0A) IP20 (OBSOLETO - Usar iC2-Micro)", supply: "3x400", kw: 4.0, current: 9.0, ip: 20, pvp: null },
+                    { refFab: "132F0026", shortDesc: "FC 51 3x400V 11kW (23.0A) IP20 (OBSOLETO - Usar iC2-Micro)", supply: "3x400", kw: 11.0, current: 23.0, ip: 20, pvp: null },
+                    { refFab: "132F0030", shortDesc: "FC 51 3x400V 22kW (43.0A) IP20 (OBSOLETO - Usar iC2-Micro)", supply: "3x400", kw: 22.0, current: 43.0, ip: 20, pvp: null }
+                ]
+            },
+
+            // 5. ABB
+            {
+                id: "abb-acs580", brand: "ABB", model: "ACS580 Series (All-compatible Drive)",
+                powerMin: 0.75, powerMax: 500.0, warranty: "2 Años (Garantía Oficial ABB Drives)", voltages: ["3x400", "3x480"], page: "ACS580",
+                description: "Variador all-compatible ABB ACS580 de uso general. Sustituto oficial directo de la gama ACS550. Incluye STO SIL3/PLe integrado de serie.",
+                functionsCount: ">150", presetSpeeds: 16, aiCount: 2, diCount: 6, aoCount: 2, doCount: 1, relays: 3,
+                nativeComm: ["Modbus RTU", "ABB Assistant Control"], optionalComm: ["Profibus DP", "Profinet", "EtherNet/IP", "BACnet"], encoderSupport: false, safety: true, safetyDetail: "STO SIL3 / PLe Integrado", plcInternal: true, nfcSupport: false, isObsolete: false,
+                references: [
+                    { refFab: "ACS580-01-02A7-4", shortDesc: "ACS580 3x400V 0.75kW (2.7A) IP21 (Sustituto oficial ACS550)", supply: "3x400", kw: 0.75, current: 2.7, ip: 21, pvp: null },
+                    { refFab: "ACS580-01-09A5-4", shortDesc: "ACS580 3x400V 4.0kW (9.5A) IP21 (Sustituto oficial ACS550)", supply: "3x400", kw: 4.0, current: 9.5, ip: 21, pvp: null },
+                    { refFab: "ACS580-01-018A-4", shortDesc: "ACS580 3x400V 7.5kW (18.0A) IP21 (Sustituto oficial ACS550)", supply: "3x400", kw: 7.5, current: 18.0, ip: 21, pvp: null },
+                    { refFab: "ACS580-01-026A-4", shortDesc: "ACS580 3x400V 11kW (26.0A) IP21 (Sustituto oficial ACS550)", supply: "3x400", kw: 11.0, current: 26.0, ip: 21, pvp: null },
+                    { refFab: "ACS580-01-033A-4", shortDesc: "ACS580 3x400V 15kW (33.0A) IP21 (Sustituto oficial ACS550)", supply: "3x400", kw: 15.0, current: 33.0, ip: 21, pvp: null },
+                    { refFab: "ACS580-01-039A-4", shortDesc: "ACS580 3x400V 18.5kW (39.0A) IP21 (Sustituto oficial ACS550)", supply: "3x400", kw: 18.5, current: 39.0, ip: 21, pvp: null },
+                    { refFab: "ACS580-01-046A-4", shortDesc: "ACS580 3x400V 22kW (46.0A) IP21 (Sustituto oficial ACS550)", supply: "3x400", kw: 22.0, current: 46.0, ip: 21, pvp: null },
+                    { refFab: "ACS580-01-062A-4", shortDesc: "ACS580 3x400V 30kW (62.0A) IP21 (Sustituto oficial ACS550)", supply: "3x400", kw: 30.0, current: 62.0, ip: 21, pvp: null },
+                    { refFab: "ACS580-01-073A-4", shortDesc: "ACS580 3x400V 37kW (73.0A) IP21 (Sustituto oficial ACS550)", supply: "3x400", kw: 37.0, current: 73.0, ip: 21, pvp: null },
+                    { refFab: "ACS580-01-088A-4", shortDesc: "ACS580 3x400V 45kW (88.0A) IP21 (Sustituto oficial ACS550)", supply: "3x400", kw: 45.0, current: 88.0, ip: 21, pvp: null },
+                    { refFab: "ACS580-01-106A-4", shortDesc: "ACS580 3x400V 55kW (106A) IP21 (Sustituto oficial ACS550)", supply: "3x400", kw: 55.0, current: 106.0, ip: 21, pvp: null }
+                ]
+            },
+
+            // 6. SCHNEIDER ELECTRIC
+            {
+                id: "schneider-altivar-320", brand: "Schneider", model: "Altivar 320 (ATV320)",
+                powerMin: 0.18, powerMax: 15.0, warranty: "2 Años (Garantía Oficial Schneider Electric)", voltages: ["1x230", "3x400"], page: "18",
+                description: "Variador multifunción avanzado para maquinaria con 5 funciones de seguridad integradas (STO, SS1, SLS...), PLC integrado y formatos Compacto / Libro.",
+                functionsCount: "60", presetSpeeds: 16, aiCount: 3, diCount: 6, aoCount: 1, doCount: 1, relays: 2,
+                nativeComm: ["Modbus RTU", "CANopen"], optionalComm: ["Profinet", "EtherCAT", "EtherNet/IP"], encoderSupport: true, safety: true, safetyDetail: "5 Funciones STO/SS1/SLS", plcInternal: true, nfcSupport: false, isObsolete: false,
+                applications: { hvac: true, compressor_light: true, compressor_heavy: true, conveyor: true, hoisting: true, high_perf: true, standard: true },
+                references: [
+                    { refFab: "ATV320U07M2C", shortDesc: "Altivar 320 1x230V 0.75kW (4.8A) IP20 Compacto", supply: "1x230", kw: 0.75, current: 4.8, ip: 20, pvp: 414.82 },
+                    { refFab: "ATV320U07N4C", shortDesc: "Altivar 320 3x400V 0.75kW (2.3A) IP20 Compacto", supply: "3x400", kw: 0.75, current: 2.3, ip: 20, pvp: 585.96 },
+                    { refFab: "ATV320U15N4C", shortDesc: "Altivar 320 3x400V 1.5kW (4.1A) IP20 Compacto", supply: "3x400", kw: 1.5, current: 4.1, ip: 20, pvp: 694.46 },
+                    { refFab: "ATV320U40N4C", shortDesc: "Altivar 320 3x400V 4.0kW (9.5A) IP20 Compacto", supply: "3x400", kw: 4.0, current: 9.5, ip: 20, pvp: 1037.79 },
+                    { refFab: "ATV320U75N4B", shortDesc: "Altivar 320 3x400V 7.5kW (17.0A) IP20 Formato Libro", supply: "3x400", kw: 7.5, current: 17.0, ip: 20, pvp: 1458.35 },
+                    { refFab: "ATV320D11N4B", shortDesc: "Altivar 320 3x400V 11kW (27.7A) IP20 Formato Libro", supply: "3x400", kw: 11.0, current: 27.7, ip: 20, pvp: 2012.81 },
+                    { refFab: "ATV320D15N4B", shortDesc: "Altivar 320 3x400V 15kW (33.0A) IP20 Formato Libro", supply: "3x400", kw: 15.0, current: 33.0, ip: 20, pvp: 2571.93 }
+                ]
+            },
+
+            // 7. DELTA ELECTRONICS
+            {
+                id: "delta-ms300", brand: "Delta", model: "VFD-MS300 Series",
+                powerMin: 0.2, powerMax: 22.0, warranty: "2 Años (Garantía Oficial Delta Electronics)", voltages: ["1x230", "3x400"], page: "MS300",
+                description: "Variador compacto vectorial de alta eficiencia con STO SIL2/PLd, PLC interno programable (2k pasos) y puerto USB integrado. Ideal para maquinaria general, textil y cintas.",
+                functionsCount: ">80", presetSpeeds: 16, aiCount: 2, diCount: 7, aoCount: 1, doCount: 1, relays: 1,
+                nativeComm: ["Modbus RTU", "USB Config"], optionalComm: ["Profinet", "EtherNet/IP", "EtherCAT", "CANopen", "Profibus DP"], encoderSupport: false, safety: true, safetyDetail: "STO SIL2 / PLd Integrado", plcInternal: true, nfcSupport: false, isObsolete: false,
+                applications: { hvac: true, compressor_light: true, compressor_heavy: true, conveyor: true, hoisting: false, high_perf: true, standard: true },
+                references: [
+                    { refFab: "VFD4A8MS21ANSAA", shortDesc: "MS300 1x230V 0.75kW (4.8A) STO SIL2 IP20", supply: "1x230", kw: 0.75, current: 4.8, ip: 20, pvp: 285.00 },
+                    { refFab: "VFD2A7MS43ANSAA", shortDesc: "MS300 3x400V 0.75kW (2.7A) STO SIL2 IP20", supply: "3x400", kw: 0.75, current: 2.7, ip: 20, pvp: 395.00 },
+                    { refFab: "VFD9A0MS43ANSAA", shortDesc: "MS300 3x400V 4.0kW (9.0A) STO SIL2 IP20", supply: "3x400", kw: 4.0, current: 9.0, ip: 20, pvp: 650.00 },
+                    { refFab: "VFD17AMS43ANSAA", shortDesc: "MS300 3x400V 7.5kW (17.0A) STO SIL2 IP20", supply: "3x400", kw: 7.5, current: 17.0, ip: 20, pvp: 950.00 },
+                    { refFab: "VFD25AMS43ANSAA", shortDesc: "MS300 3x400V 11kW (25.0A) STO SIL2 IP20", supply: "3x400", kw: 11.0, current: 25.0, ip: 20, pvp: 1220.00 },
+                    { refFab: "VFD32AMS43ANSAA", shortDesc: "MS300 3x400V 15kW (32.0A) STO SIL2 IP20", supply: "3x400", kw: 15.0, current: 32.0, ip: 20, pvp: 1480.00 },
+                    { refFab: "VFD45AMS43ANSAA", shortDesc: "MS300 3x400V 22kW (45.0A) STO SIL2 IP20", supply: "3x400", kw: 22.0, current: 45.0, ip: 20, pvp: 2100.00 }
+                ]
+            },
+
+            // 8. SIEMENS
+            {
+                id: "siemens-v20", brand: "Siemens", model: "SINAMICS V20 Series",
+                powerMin: 0.12, powerMax: 30.0, warranty: "2 Años (Garantía Oficial Siemens)", voltages: ["1x230", "3x400"], page: "V20",
+                description: "Variador de frecuencia compacto básico Siemens SINAMICS V20 para aplicaciones sencillas de bombeo, ventilación, transporte y procesado.",
+                functionsCount: ">60", presetSpeeds: 16, aiCount: 2, diCount: 4, aoCount: 1, doCount: 1, relays: 1,
+                nativeComm: ["Modbus RTU", "USS"], optionalComm: [], encoderSupport: false, safety: false, safetyDetail: "NO", plcInternal: true, nfcSupport: false, isObsolete: false,
+                applications: { hvac: true, compressor_light: true, compressor_heavy: false, conveyor: true, hoisting: false, high_perf: false, standard: true },
+                references: [
+                    { refFab: "6SL3210-5BB13-7UV1", shortDesc: "SINAMICS V20 1x230V 0.37kW (2.3A)", supply: "1x230", kw: 0.37, current: 2.3, ip: 20, pvp: null },
+                    { refFab: "6SL3210-5BB15-5UV1", shortDesc: "SINAMICS V20 1x230V 0.55kW (3.2A)", supply: "1x230", kw: 0.55, current: 3.2, ip: 20, pvp: null },
+                    { refFab: "6SL3210-5BB17-5UV1", shortDesc: "SINAMICS V20 1x230V 0.75kW (3.9A)", supply: "1x230", kw: 0.75, current: 3.9, ip: 20, pvp: null },
+                    { refFab: "6SL3210-5FE10-4UA0", shortDesc: "SINAMICS V20 3x400V 0.37kW (1.3A)", supply: "3x400", kw: 0.37, current: 1.3, ip: 20, pvp: null },
+                    { refFab: "6SL3210-5FE10-8UA0", shortDesc: "SINAMICS V20 3x400V 0.75kW (2.2A)", supply: "3x400", kw: 0.75, current: 2.2, ip: 20, pvp: null },
+                    { refFab: "6SL3210-5FE11-5UA0", shortDesc: "SINAMICS V20 3x400V 1.5kW (4.1A)", supply: "3x400", kw: 1.5, current: 4.1, ip: 20, pvp: null },
+                    { refFab: "6SL3210-5FE12-2UA0", shortDesc: "SINAMICS V20 3x400V 2.2kW (5.6A)", supply: "3x400", kw: 2.2, current: 5.6, ip: 20, pvp: null },
+                    { refFab: "6SL3210-5FE13-8UA0", shortDesc: "SINAMICS V20 3x400V 4.0kW (8.8A)", supply: "3x400", kw: 4.0, current: 8.8, ip: 20, pvp: null },
+                    { refFab: "6SL3210-5FE15-5UA0", shortDesc: "SINAMICS V20 3x400V 5.5kW (12.5A)", supply: "3x400", kw: 5.5, current: 12.5, ip: 20, pvp: null },
+                    { refFab: "6SL3210-5FE17-5UA0", shortDesc: "SINAMICS V20 3x400V 7.5kW (16.5A)", supply: "3x400", kw: 7.5, current: 16.5, ip: 20, pvp: null },
+                    { refFab: "6SL3210-5FE11-1UA0", shortDesc: "SINAMICS V20 3x400V 11kW (25.0A)", supply: "3x400", kw: 11.0, current: 25.0, ip: 20, pvp: null },
+                    { refFab: "6SL3210-5FE13-0UA0", shortDesc: "SINAMICS V20 3x400V 30kW (60.0A)", supply: "3x400", kw: 30.0, current: 60.0, ip: 20, pvp: null }
+                ]
+            },
+
+            // 9. MITSUBISHI ELECTRIC
+            {
+                id: "mitsubishi-fr-e800", brand: "Mitsubishi Electric", model: "FR-E800 Series",
+                powerMin: 0.18, powerMax: 22.0, warranty: "2 Años (Garantía Oficial Mitsubishi Electric)", voltages: ["1x230", "3x230", "3x400"], page: "10",
+                description: "Variador compacto de altas prestaciones con PLC interno, conectividad Ethernet nativa dual y algoritmos de control avanzado.",
+                functionsCount: ">80", presetSpeeds: 16, aiCount: 2, diCount: 7, aoCount: 1, doCount: 2, relays: 2,
+                nativeComm: ["Modbus RTU", "CC-Link IE Basic"], optionalComm: ["Profinet", "EtherNet/IP", "EtherCAT"], encoderSupport: true, safety: true, safetyDetail: "STO SIL2 Integrado", plcInternal: true, nfcSupport: false, isObsolete: false,
+                applications: { hvac: true, compressor_light: true, compressor_heavy: true, conveyor: true, hoisting: true, high_perf: true, standard: true },
+                references: [
+                    { refFab: "FR-E820S-0030-4-60", shortDesc: "FR-E800 1x230V 0.4kW (3.0A)", supply: "1x230", kw: 0.4, current: 3.0, ip: 20, pvp: 406.60 },
+                    { refFab: "FR-E820S-0050-4-60", shortDesc: "FR-E800 1x230V 0.75kW (5.0A)", supply: "1x230", kw: 0.75, current: 5.0, ip: 20, pvp: 472.31 },
+                    { refFab: "FR-E840-0026-4-60", shortDesc: "FR-E800 3x400V 0.75kW (2.6A)", supply: "3x400", kw: 0.75, current: 2.6, ip: 20, pvp: 569.94 },
+                    { refFab: "FR-E840-0095-4-60", shortDesc: "FR-E800 3x400V 4.0kW (9.5A)", supply: "3x400", kw: 4.0, current: 9.5, ip: 20, pvp: 952.95 },
+                    { refFab: "FR-E840-0170-4-60", shortDesc: "FR-E800 3x400V 7.5kW (17.0A)", supply: "3x400", kw: 7.5, current: 17.0, ip: 20, pvp: 1284.90 },
+                    { refFab: "FR-E840-0230-4-60", shortDesc: "FR-E800 3x400V 11kW (23.0A)", supply: "3x400", kw: 11.0, current: 23.0, ip: 20, pvp: 1432.45 },
+                    { refFab: "FR-E840-0300-4-60", shortDesc: "FR-E800 3x400V 15kW (30.0A)", supply: "3x400", kw: 15.0, current: 30.0, ip: 20, pvp: 1713.16 },
+                    { refFab: "FR-E840-0440-4-60", shortDesc: "FR-E800 3x400V 22kW (44.0A)", supply: "3x400", kw: 22.0, current: 44.0, ip: 20, pvp: 2467.02 }
+                ]
+            },
+
+            // 10. OMRON
+            {
+                id: "omron-3g3m1", brand: "Omron", model: "3G3M1 Series",
+                powerMin: 0.1, powerMax: 22.0, warranty: "2 Años (Garantía Oficial Omron Industrial Automation)", voltages: ["1x230", "3x230", "3x400"], page: "14-15",
+                description: "Variador compacto integrable de forma transparente en Sysmac Studio. Opción EtherCAT nativo, STO integradas y entrada de encoder dedicada para lazo cerrado.",
+                functionsCount: ">60", presetSpeeds: 16, aiCount: 2, diCount: 7, aoCount: 1, doCount: 2, relays: 3,
+                nativeComm: ["Modbus RTU", "EtherCAT"], optionalComm: [], encoderSupport: true, safety: true, safetyDetail: "STO Entradas Dedicadas", plcInternal: true, nfcSupport: false, isObsolete: false,
+                applications: { hvac: true, compressor_light: true, compressor_heavy: true, conveyor: true, hoisting: true, high_perf: true, standard: true },
+                references: [
+                    { refFab: "3G3M1-AB007", shortDesc: "3G3M1 1x230V 0.75kW (5.0A)", supply: "1x230", kw: 0.75, current: 5.0, ip: 20, pvp: 442.60 },
+                    { refFab: "3G3M1-A4007", shortDesc: "3G3M1 3x400V 0.75kW (3.4A)", supply: "3x400", kw: 0.75, current: 3.4, ip: 20, pvp: 586.00 },
+                    { refFab: "3G3M1-A4040", shortDesc: "3G3M1 3x400V 4.0kW (9.2A)", supply: "3x400", kw: 4.0, current: 9.2, ip: 20, pvp: 970.50 },
+                    { refFab: "3G3M1-A4075", shortDesc: "3G3M1 3x400V 7.5kW (18.0A)", supply: "3x400", kw: 7.5, current: 18.0, ip: 20, pvp: 1466.00 },
+                    { refFab: "3G3M1-A4110", shortDesc: "3G3M1 3x400V 11kW (24.0A)", supply: "3x400", kw: 11.0, current: 24.0, ip: 20, pvp: 2105.00 },
+                    { refFab: "3G3M1-A4150", shortDesc: "3G3M1 3x400V 15kW (31.0A)", supply: "3x400", kw: 15.0, current: 31.0, ip: 20, pvp: 2389.00 }
+                ]
+            },
+
+            // 11. ALLEN-BRADLEY (ROCKWELL)
+            {
+                id: "allen-bradley-pf525", brand: "Allen-Bradley", model: "PowerFlex 525",
+                powerMin: 0.4, powerMax: 22.0, warranty: "1 Año (Garantía Oficial Rockwell Automation)", voltages: ["1x230", "3x230", "3x400"], page: "PF525",
+                description: "Variador de CA compacto y modular con puerto Ethernet/IP integrado de serie, control vectorial sin sensor, STO SIL3/PLe y pantalla LCD.",
+                functionsCount: ">100", presetSpeeds: 16, aiCount: 2, diCount: 7, aoCount: 1, doCount: 2, relays: 2,
+                nativeComm: ["EtherNet/IP", "Modbus RTU"], optionalComm: ["Profibus DPV1", "DeviceNet"], encoderSupport: true, safety: true, safetyDetail: "STO SIL3 / PLe Integrado", plcInternal: true, nfcSupport: false, isObsolete: false,
+                applications: { hvac: true, compressor_light: true, compressor_heavy: true, conveyor: true, hoisting: true, high_perf: true, standard: true },
+                references: [
+                    { refFab: "25B-D2P3N114", shortDesc: "PowerFlex 525 3x400V 0.75kW (2.3A)", supply: "3x400", kw: 0.75, current: 2.3, ip: 20, pvp: null },
+                    { refFab: "25B-D037N114", shortDesc: "PowerFlex 525 3x400V 4.0kW (8.7A)", supply: "3x400", kw: 4.0, current: 8.7, ip: 20, pvp: null },
+                    { refFab: "25B-D017N114", shortDesc: "PowerFlex 525 3x400V 7.5kW (17.5A)", supply: "3x400", kw: 7.5, current: 17.5, ip: 20, pvp: null },
+                    { refFab: "25B-D024N114", shortDesc: "PowerFlex 525 3x400V 11kW (24.0A)", supply: "3x400", kw: 11.0, current: 24.0, ip: 20, pvp: null },
+                    { refFab: "25B-D030N114", shortDesc: "PowerFlex 525 3x400V 15kW (30.0A)", supply: "3x400", kw: 15.0, current: 30.0, ip: 20, pvp: null },
+                    { refFab: "25B-D043N114", shortDesc: "PowerFlex 525 3x400V 22kW (43.0A)", supply: "3x400", kw: 22.0, current: 43.0, ip: 20, pvp: null }
+                ]
+            }
+        ];
+
+        let catalogData = [];
+        let comparedReferences = [];
+        let roiCollapsed = false;
+        let wizardStep = 1;
+        let wizardSelection = { app: 'hvac' };
+
+        window.addEventListener('DOMContentLoaded', () => {
+            loadCatalogData();
+            initBrandCheckboxes();
+            calculateRoi();
+            applyFilters();
+
+            document.addEventListener('click', (e) => {
+                const dropdown = document.getElementById('autocomplete-dropdown');
+                const searchInput = document.getElementById('search-query');
+                if (dropdown && !dropdown.contains(e.target) && e.target !== searchInput) {
+                    dropdown.classList.add('hidden');
+                }
+            });
+        });
+
+        function loadCatalogData() {
+            const STORAGE_KEY = 'dexis_vfd_catalog_v90';
+            try {
+                ['v85','v70','v65','v60'].forEach(k => localStorage.removeItem('dexis_vfd_catalog_' + k));
+                
+                const stored = localStorage.getItem(STORAGE_KEY);
+                if (stored) {
+                    const parsed = JSON.parse(stored);
+                    if (Array.isArray(parsed) && parsed.length > 0) {
+                        catalogData = parsed;
+                        return;
+                    }
+                }
+            } catch (e) {
+                console.warn("LocalStorage no disponible o corrupto:", e);
+            }
+            catalogData = JSON.parse(JSON.stringify(DEFAULT_CATALOG));
+        }
+
+        function initBrandCheckboxes() {
+            const container = document.getElementById('brand-checkboxes-container');
+            if (!container) return;
+            if (!Array.isArray(catalogData) || catalogData.length === 0) {
+                catalogData = JSON.parse(JSON.stringify(DEFAULT_CATALOG));
+            }
+            const brands = Array.from(new Set(catalogData.map(item => item.brand))).sort();
+            container.innerHTML = brands.map(b => `
+                <label class="flex items-center space-x-2 text-xs font-medium text-slate-700 cursor-pointer">
+                    <input type="checkbox" value="${b}" class="filter-brand rounded text-dexis-red focus:ring-dexis-red" onchange="applyFilters()" checked>
+                    <span>${b}</span>
+                </label>
+            `).join('');
+        }
+
+        function filterByBrand(brandName) {
+            const brandCheckboxes = document.querySelectorAll('.filter-brand');
+            if (brandCheckboxes.length > 0) {
+                brandCheckboxes.forEach(cb => {
+                    cb.checked = (cb.value.toLowerCase().includes(brandName.toLowerCase()));
+                });
+            }
+            document.getElementById('search-query').value = '';
+            applyFilters();
+            showToast(`Filtrado por marca: ${brandName}`, "info");
+        }
+
+        function handleSearchInput() {
+            const query = document.getElementById('search-query').value.trim();
+            const dropdown = document.getElementById('autocomplete-dropdown');
+            
+            applyFilters();
+
+            if (query.length < 2) {
+                dropdown.classList.add('hidden');
+                return;
+            }
+
+            let matches = [];
+            const queryLower = query.toLowerCase();
+
+            catalogData.forEach(item => {
+                if (item.model.toLowerCase().includes(queryLower) || item.brand.toLowerCase().includes(queryLower)) {
+                    matches.push({ type: 'Gama/Serie', title: `${item.brand} ${item.model}`, val: item.model });
+                }
+                if (item.references) {
+                    item.references.forEach(ref => {
+                        if (ref.refFab.toLowerCase().includes(queryLower) || (ref.shortDesc && ref.shortDesc.toLowerCase().includes(queryLower))) {
+                            matches.push({ type: 'Referencia', title: `${ref.refFab} (${ref.kw} kW - ${ref.supply})`, val: ref.refFab });
+                        }
+                    });
+                }
+            });
+
+            const uniqueMatches = Array.from(new Map(matches.map(m => [m.val, m])).values()).slice(0, 8);
+
+            if (uniqueMatches.length === 0) {
+                dropdown.classList.add('hidden');
+                return;
+            }
+
+            dropdown.innerHTML = uniqueMatches.map(m => `
+                <div onclick="setSearchTerm('${m.val}')" class="p-2.5 hover:bg-slate-50 cursor-pointer flex items-center justify-between text-xs font-semibold">
+                    <span class="text-slate-800">${m.title}</span>
+                    <span class="text-[10px] uppercase font-black px-1.5 py-0.5 rounded ${m.type === 'Referencia' ? 'bg-emerald-100 text-emerald-800' : 'bg-sky-100 text-sky-800'}">${m.type}</span>
+                </div>
+            `).join('');
+            dropdown.classList.remove('hidden');
+        }
+
+        function setSearchTerm(term) {
+            const input = document.getElementById('search-query');
+            if (input) input.value = term;
+            document.getElementById('autocomplete-dropdown')?.classList.add('hidden');
+            applyFilters();
+        }
+
+        function copyRoiSummaryToClipboard() {
+            const kw = document.getElementById('roi-kw')?.value || '30';
+            const money = document.getElementById('roi-res-money')?.innerText || '0 €';
+            const kwh = document.getElementById('roi-res-kwh')?.innerText || '0 kWh';
+            const months = document.getElementById('roi-res-months')?.innerText || '0 Meses';
+            const co2 = document.getElementById('roi-res-co2')?.innerText || '0 t CO₂';
+            const query = document.getElementById('search-query')?.value || '';
+
+            const summaryText = `--- OFERTA Y ESTUDIO DE ROI - DEXIS IBÉRICA ---\n` +
+                `Equipo / Referencia: ${query ? query : 'Variador Industrial Dexis (' + kw + ' kW)'}\n` +
+                `Potencia Motor: ${kw} kW\n` +
+                `Ahorro Económico Anual Estimado: ${money}\n` +
+                `Energía Ahorrada / Año: ${kwh}\n` +
+                `Tiempo de Amortización (Payback): ${months}\n` +
+                `Reducción Emisiones CO₂: ${co2}\n\n` +
+                `Atentamente,\nEquipo Técnico-Comercial Dexis Ibérica`;
+
+            navigator.clipboard.writeText(summaryText).then(() => {
+                showToast("Resumen de oferta y ROI copiado al portapapeles", "success");
+            }).catch(() => {
+                showToast("Error al copiar al portapapeles", "error");
+            });
+        }
+
+        function printRoiCalculator() {
+            document.body.classList.add('print-roi');
+            window.print();
+            document.body.classList.remove('print-roi');
+        }
+
+        function openWizardModal() {
+            wizardStep = 1;
+            updateWizardUI();
+            document.getElementById('wizard-modal').classList.remove('hidden');
+        }
+
+        function selectWizardApp(app) {
+            wizardSelection.app = app;
+            nextWizardStep();
+        }
+
+        function nextWizardStep() {
+            if (wizardStep < 3) wizardStep++;
+            updateWizardUI();
+        }
+
+        function prevWizardStep() {
+            if (wizardStep > 1) wizardStep--;
+            updateWizardUI();
+        }
+
+        function updateWizardUI() {
+            document.getElementById('wiz-step-1').classList.toggle('hidden', wizardStep !== 1);
+            document.getElementById('wiz-step-2').classList.toggle('hidden', wizardStep !== 2);
+            document.getElementById('wiz-step-3').classList.toggle('hidden', wizardStep !== 3);
+
+            document.getElementById('wiz-prev-btn').classList.toggle('hidden', wizardStep === 1);
+            document.getElementById('wiz-next-btn').classList.toggle('hidden', wizardStep === 3);
+            document.getElementById('wiz-apply-btn').classList.toggle('hidden', wizardStep !== 3);
+
+            document.getElementById('wiz-step-1-indicator').className = wizardStep === 1 ? 'text-dexis-red font-black' : 'text-slate-400';
+            document.getElementById('wiz-step-2-indicator').className = wizardStep === 2 ? 'text-dexis-red font-black' : 'text-slate-400';
+            document.getElementById('wiz-step-3-indicator').className = wizardStep === 3 ? 'text-dexis-red font-black' : 'text-slate-400';
+        }
+
+        function finishWizard() {
+            const power = parseFloat(document.getElementById('wiz-power').value) || 0;
+            const voltage = document.getElementById('wiz-voltage').value;
+            const sto = document.getElementById('wiz-sto').checked;
+            const closedLoop = document.getElementById('wiz-closed-loop').checked;
+
+            document.getElementById('filter-power').value = power;
+            document.getElementById('filter-application').value = wizardSelection.app || 'all';
+            document.getElementById('filter-sto').checked = sto;
+
+            const radioControl = document.querySelector(`input[name="control-loop"][value="${closedLoop ? 'closed' : 'all'}"]`);
+            if (radioControl) radioControl.checked = true;
+
+            document.querySelectorAll('.filter-voltage').forEach(cb => {
+                cb.checked = (cb.value === voltage);
+            });
+
+            closeModal('wizard-modal');
+            applyFilters();
+            syncRoiPower();
+            showToast("Filtros aplicados según el Asistente Guiado", "success");
+        }
+
+        function toggleRoiCalculator() {
+            const content = document.getElementById('roi-calculator-content');
+            const icon = document.getElementById('roi-toggle-icon');
+            const text = document.getElementById('roi-toggle-text');
+            roiCollapsed = !roiCollapsed;
+            if (roiCollapsed) {
+                content.classList.add('hidden');
+                icon.className = 'fa-solid fa-chevron-down';
+                if (text) text.innerText = 'Desplegar ROI';
+            } else {
+                content.classList.remove('hidden');
+                icon.className = 'fa-solid fa-chevron-up';
+                if (text) text.innerText = 'Plegar';
+            }
+        }
+
+        function syncRoiPower() {
+            const filterKw = parseFloat(document.getElementById('filter-power').value);
+            if (filterKw && filterKw > 0) {
+                const roiKwInput = document.getElementById('roi-kw');
+                if (roiKwInput) { roiKwInput.value = filterKw; calculateRoi(); }
+            }
+        }
+
+        function includeInRoiCalculator(kw, pvp) {
+            const roiKwInput = document.getElementById('roi-kw');
+            if (roiKwInput) roiKwInput.value = kw;
+            if (pvp && !isNaN(pvp) && pvp > 0) {
+                const roiVfdCostInput = document.getElementById('roi-vfd-cost');
+                if (roiVfdCostInput) roiVfdCostInput.value = pvp;
+            }
+            calculateRoi();
+            const roiBox = document.getElementById('roi-calculator-box');
+            if (roiBox) {
+                roiBox.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                roiBox.classList.add('ring-4', 'ring-emerald-400');
+                setTimeout(() => roiBox.classList.remove('ring-4', 'ring-emerald-400'), 1500);
+            }
+            showToast(`Variador de ${kw} kW cargado en la Calculadora ROI`, "success");
+        }
+
+        function calculateRoi() {
+            const kw = parseFloat(document.getElementById('roi-kw').value) || 30;
+            const hours = parseFloat(document.getElementById('roi-hours').value) || 8760;
+            const costPerKwh = parseFloat(document.getElementById('roi-cost').value) || 0.12;
+            const speedRedPercent = parseFloat(document.getElementById('roi-speed-red').value) || 20;
+            const loadType = document.getElementById('roi-load-type').value;
+            const vfdCost = parseFloat(document.getElementById('roi-vfd-cost').value) || 2370;
+
+            const annualCostDirect = kw * hours * costPerKwh;
+            let speedRatio = (100 - speedRedPercent) / 100;
+            let powerWithVfd = loadType === 'centrifugal' ? kw * Math.pow(speedRatio, 3) : kw * speedRatio;
+
+            const annualCostVfd = powerWithVfd * hours * costPerKwh;
+            const annualSavingMoney = Math.max(0, annualCostDirect - annualCostVfd);
+            const annualSavingKwh = Math.max(0, (kw - powerWithVfd) * hours);
+
+            let paybackYears = annualSavingMoney > 0 ? (vfdCost / annualSavingMoney) : 0;
+            let paybackMonths = paybackYears * 12;
+            const co2TonsSaved = (annualSavingKwh * 0.25) / 1000;
+
+            document.getElementById('roi-res-money').innerText = annualSavingMoney.toLocaleString('es-ES', { maximumFractionDigits: 0 }) + ' €';
+            document.getElementById('roi-res-kwh').innerText = annualSavingKwh.toLocaleString('es-ES', { maximumFractionDigits: 0 }) + ' kWh';
+
+            if (paybackYears > 0 && isFinite(paybackYears)) {
+                document.getElementById('roi-res-months').innerText = paybackMonths < 12 ? paybackMonths.toFixed(1) + ' Meses' : paybackYears.toFixed(1) + ' Años';
+                document.getElementById('roi-res-years').innerText = `(${paybackYears.toFixed(2)} años)`;
+            } else {
+                document.getElementById('roi-res-months').innerText = 'N/A';
+                document.getElementById('roi-res-years').innerText = '(Sin ahorro)';
+            }
+            document.getElementById('roi-res-co2').innerText = co2TonsSaved.toLocaleString('es-ES', { maximumFractionDigits: 1 }) + ' t CO₂';
+        }
+
+        function selectReferenceAndDisplayExact(refFabCode) {
+            const searchInput = document.getElementById('search-query');
+            if (searchInput) searchInput.value = refFabCode;
+            applyFilters();
+            for (const item of catalogData) {
+                if (item.references) {
+                    const found = item.references.find(r => r.refFab.toLowerCase() === refFabCode.toLowerCase());
+                    if (found) {
+                        includeInRoiCalculator(found.kw, found.pvp || 2370);
+                        const exactContainer = document.getElementById('exact-match-container');
+                        if (exactContainer) exactContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        showToast(`Referencia ${found.refFab} seleccionada`, "success");
+                        break;
+                    }
+                }
+            }
+        }
+
+        // Helper to convert nominal current (Amperes) to motor power rating in kW
+        function currentToMotorKw(amps, supply) {
+            if (supply === "1x230" || supply === "3x230") {
+                if (amps <= 2.2) return 0.37;
+                if (amps <= 3.2) return 0.55;
+                if (amps <= 5.0) return 0.75;
+                if (amps <= 8.0) return 1.5;
+                if (amps <= 11.0) return 2.2;
+                if (amps <= 18.0) return 4.0;
+                if (amps <= 25.0) return 5.5;
+                if (amps <= 32.0) return 7.5;
+                return 11.0;
+            } else { // 3x400V
+                if (amps <= 1.5) return 0.37;
+                if (amps <= 2.0) return 0.55;
+                if (amps <= 3.0) return 0.75;
+                if (amps <= 4.5) return 1.5;
+                if (amps <= 6.0) return 2.2;
+                if (amps <= 10.5) return 4.0;
+                if (amps <= 14.5) return 5.5;
+                if (amps <= 18.5) return 7.5;
+                if (amps <= 25.0) return 11.0;
+                if (amps <= 32.0) return 15.0;
+                if (amps <= 40.0) return 18.5;
+                if (amps <= 48.0) return 22.0;
+                if (amps <= 65.0) return 30.0;
+                if (amps <= 78.0) return 37.0;
+                if (amps <= 95.0) return 45.0;
+                return 55.0;
+            }
+        }
+
+        function parseExternalReferencePattern(refCode) {
+            const cleanCode = refCode.toUpperCase().trim();
+            let estimatedKw = 4.0;
+            let estimatedSupply = "3x400";
+            let inferredBrand = "Desconocida / Terceros";
+            let modelName = cleanCode;
+            let isObsolete = false;
+            let hasSto = true;
+            let stoDetail = "STO SIL2 / PLd (Estándar)";
+            let hasEncoder = false;
+            let hasPlc = false;
+            let ai = 2, di = 4, relays = 1;
+
+            // 1. INVERTEK DRIVES (ODE-3-..., ODP-2-..., ODV-3-...)
+            if (cleanCode.startsWith('ODE-') || cleanCode.startsWith('ODP-') || cleanCode.startsWith('ODV-') || cleanCode.includes('INVERTEK')) {
+                inferredBrand = "Invertek Drives";
+                modelName = cleanCode.startsWith('ODP') ? "Optidrive P2" : (cleanCode.startsWith('ODV') ? "Optidrive HV" : "Optidrive E3");
+                hasSto = true;
+                stoDetail = "STO SIL2 / PLd Integrado";
+                if (cleanCode.startsWith('ODP')) { hasEncoder = true; hasPlc = true; ai = 2; di = 6; relays = 2; }
+                
+                const invertekMatch = cleanCode.match(/OD[E|P|V]-3-(\d)(\d)(\d{4})/);
+                if (invertekMatch) {
+                    const voltageDigit = invertekMatch[2];
+                    const currentRaw = parseInt(invertekMatch[3], 10);
+                    const amperes = currentRaw / 10.0;
+
+                    if (voltageDigit === '1' || voltageDigit === '2') estimatedSupply = "1x230";
+                    else if (voltageDigit === '3') estimatedSupply = "3x230";
+                    else estimatedSupply = "3x400";
+
+                    estimatedKw = currentToMotorKw(amperes, estimatedSupply);
+                }
+            } else if (cleanCode.includes('FRN') || cleanCode.includes('FUJI')) {
+                inferredBrand = "Fuji Electric";
+                modelName = "FRENIC Series";
+                stoDetail = "STO SIL3 Integrado";
+            } else if (cleanCode.includes('VFS') || cleanCode.includes('TOSHIBA')) {
+                inferredBrand = "Toshiba";
+                modelName = "VF-S15 / VF-AS3";
+            } else if (cleanCode.includes('FC-') || cleanCode.includes('VLT') || cleanCode.includes('FC51')) {
+                inferredBrand = "Danfoss VLT (Legacy)";
+                modelName = "VLT® Micro / AutomationDrive";
+                isObsolete = true;
+                hasSto = false;
+                stoDetail = "Sin STO (Modelo Obsoleto)";
+            } else if (cleanCode.includes('DG1') || cleanCode.includes('DE1') || cleanCode.includes('EATON')) {
+                inferredBrand = "Eaton";
+                modelName = "PowerXL Series";
+            } else if (cleanCode.includes('CIMR') || cleanCode.includes('VS616')) {
+                inferredBrand = "Yaskawa (Legacy)";
+                modelName = "Varispeed / CIMR";
+                isObsolete = true;
+                hasSto = false;
+                stoDetail = "Sin STO (Modelo Descatalogado)";
+            } else if (cleanCode.includes('SEW') || cleanCode.includes('MOVITRAC')) {
+                inferredBrand = "SEW Eurodrive";
+                modelName = "Movitrac / Movidrive";
+                hasEncoder = true;
+            } else if (cleanCode.includes('LENZE') || cleanCode.includes('E82') || cleanCode.includes('I510')) {
+                inferredBrand = "Lenze";
+                modelName = "i500 / E82 EV";
+                if (cleanCode.includes('E82')) { isObsolete = true; hasSto = false; stoDetail = "Sin STO"; }
+            } else if (cleanCode.includes('6SL')) {
+                inferredBrand = "Siemens SINAMICS";
+                modelName = "SINAMICS G120 / V20";
+            } else if (cleanCode.includes('ATV')) {
+                inferredBrand = "Schneider Altivar";
+                modelName = "Altivar Series";
+            } else if (cleanCode.includes('ACS')) {
+                inferredBrand = "ABB";
+                modelName = "ACS Series";
+            } else if (cleanCode.includes('FR-')) {
+                inferredBrand = "Mitsubishi";
+                modelName = "FREQROL Series";
+            }
+
+            // Supply Voltage Detection
+            if (cleanCode.includes('230') || cleanCode.includes('220') || cleanCode.includes('1PH') || cleanCode.includes('M2')) {
+                estimatedSupply = "1x230";
+            } else {
+                estimatedSupply = "3x400";
+            }
+
+            // Parse power if not set by invertek match
+            if (!cleanCode.startsWith('ODE-') && !cleanCode.startsWith('ODP-') && !cleanCode.startsWith('ODV-')) {
+                let sanitizedForPower = cleanCode
+                    .replace(/\d+F\d+/g, '')
+                    .replace(/IP\d+/g, '')
+                    .replace(/230V|400V|480V/g, '');
+
+                const pkwMatch = sanitizedForPower.match(/(\d+[\.,]?\d*)\s*KW/);
+                if (pkwMatch) {
+                    estimatedKw = parseFloat(pkwMatch[1].replace(',', '.'));
+                } else {
+                    const numMatches = sanitizedForPower.match(/(\d+[\.,]?\d+)/g);
+                    if (numMatches) {
+                        for (const nm of numMatches) {
+                            const val = parseFloat(nm.replace(',', '.'));
+                            if (val >= 0.37 && val <= 55 && val !== 230 && val !== 400 && val !== 480 && val !== 42 && val !== 51) {
+                                estimatedKw = val;
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Construct pseudo searched VFD object for technical comparison
+            const searchedVfd = {
+                brand: inferredBrand,
+                model: modelName,
+                refFab: cleanCode,
+                kw: estimatedKw,
+                supply: estimatedSupply,
+                current: null,
+                pvp: null,
+                parentItem: {
+                    isObsolete: isObsolete,
+                    warranty: isObsolete ? "Descatalogado" : "Garantía Fabricante",
+                    aiCount: ai,
+                    diCount: di,
+                    relays: relays,
+                    safety: hasSto,
+                    safetyDetail: stoDetail,
+                    encoderSupport: hasEncoder,
+                    plcInternal: hasPlc
+                }
+            };
+
+            return { inferredBrand, estimatedKw, estimatedSupply, cleanCode, searchedVfd };
+        }
+
+        function findBestDexisAlternative(powerKw, supplyVoltage) {
+            let bestRef = null;
+            let bestItem = null;
+
+            const preferredBrands = ['nidec', 'parker', 'danfoss'];
+            
+            for (const pBrand of preferredBrands) {
+                for (const item of catalogData) {
+                    if (item.isObsolete) continue;
+                    if (item.brand.toLowerCase().includes(pBrand)) {
+                        if (item.references) {
+                            let matchRef = item.references.find(r => Math.abs(r.kw - powerKw) <= 0.05 && r.supply === supplyVoltage);
+                            if (!matchRef) {
+                                let minDiff = 999;
+                                item.references.forEach(r => {
+                                    if (r.supply === supplyVoltage) {
+                                        const diff = Math.abs(r.kw - powerKw);
+                                        if (diff < minDiff) {
+                                            minDiff = diff;
+                                            matchRef = r;
+                                        }
+                                    }
+                                });
+                            }
+                            if (matchRef && Math.abs(matchRef.kw - powerKw) <= 1.0) {
+                                return { bestItem: item, bestRef: matchRef };
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Fallback to any brand matching exact or closest power
+            let minDiff = 999;
+            for (const item of catalogData) {
+                if (item.isObsolete) continue;
+                if (item.references) {
+                    item.references.forEach(r => {
+                        if (r.supply === supplyVoltage) {
+                            const diff = Math.abs(r.kw - powerKw);
+                            if (diff < minDiff) {
+                                minDiff = diff;
+                                bestItem = item;
+                                bestRef = r;
+                            }
+                        }
+                    });
+                }
+            }
+
+            return { bestItem, bestRef };
+        }
+
+        function renderOnlineSearchBanner(parsedInfo) {
+            const container = document.getElementById('online-search-container');
+            if (!container) return;
+
+            const { inferredBrand, estimatedKw, estimatedSupply, cleanCode, searchedVfd } = parsedInfo;
+            const { bestItem, bestRef } = findBestDexisAlternative(estimatedKw, estimatedSupply);
+
+            const googleSearchUrl = `https://www.google.com/search?q=${encodeURIComponent(cleanCode + ' variador de frecuencia datasheet pdf')}`;
+
+            const isSearchedCompared = comparedReferences.some(r => r.refFab.toLowerCase() === searchedVfd.refFab.toLowerCase());
+            const isBestCompared = bestRef ? comparedReferences.some(r => r.refFab.toLowerCase() === bestRef.refFab.toLowerCase()) : false;
+
+            const altVfdObj = (bestItem && bestRef) ? {
+                brand: bestItem.brand,
+                model: bestItem.model,
+                parentItem: bestItem,
+                ...bestRef
+            } : null;
+
+            container.innerHTML = `
+                <div class="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 border-2 border-indigo-500 text-white rounded-2xl p-5 shadow-2xl space-y-4">
+                    <div class="flex items-center justify-between border-b border-indigo-800/60 pb-3 flex-wrap gap-2">
+                        <div class="flex items-center space-x-2">
+                            <span class="bg-indigo-600 text-white text-[10px] font-black uppercase px-2.5 py-1 rounded-md flex items-center gap-1 shadow">
+                                <i class="fa-solid fa-globe animate-spin" style="animation-duration: 4s;"></i> Búsqueda On-line y Extracción Técnica
+                            </span>
+                            <span class="text-xs text-indigo-200 font-bold">Referencia externa no presente en la base de datos local</span>
+                        </div>
+                        <a href="${googleSearchUrl}" target="_blank" class="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold px-3 py-1.5 rounded-lg transition shadow flex items-center space-x-1.5">
+                            <i class="fa-solid fa-magnifying-glass"></i>
+                            <span>Buscar "${cleanCode}" en Google</span>
+                        </a>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                        <!-- CARACTERÍSTICAS TÉCNICAS EXTRAÍDAS DEL EQUIPO BUSCADO -->
+                        <div class="bg-slate-800/90 p-4 rounded-xl border-2 border-amber-500/80 flex flex-col justify-between space-y-3">
+                            <div>
+                                <div class="flex items-center justify-between mb-1">
+                                    <span class="bg-amber-500 text-slate-950 font-black text-[10px] uppercase px-2 py-0.5 rounded">
+                                        Equipo Buscado Extraído (${searchedVfd.kw} kW)
+                                    </span>
+                                    <span class="text-xs font-bold text-amber-300">${searchedVfd.brand}</span>
+                                </div>
+                                <div class="font-mono text-sm font-bold text-white mt-1">Ref: ${searchedVfd.refFab}</div>
+                                
+                                <div class="mt-3 space-y-1.5 text-[11px] text-slate-300 bg-slate-900/60 p-3 rounded-lg border border-slate-700">
+                                    <div class="flex justify-between"><span class="text-slate-400 font-bold">Garantía / Estado:</span> <strong class="${searchedVfd.parentItem.isObsolete ? 'text-rose-400 font-black' : 'text-emerald-400'}">${searchedVfd.parentItem.warranty}</strong></div>
+                                    <div class="flex justify-between"><span class="text-slate-400 font-bold">Potencia / Tensión:</span> <strong class="text-white">${searchedVfd.kw} kW | ${searchedVfd.supply}</strong></div>
+                                    <div class="flex justify-between"><span class="text-slate-400 font-bold">Seguridad (STO):</span> <strong class="${searchedVfd.parentItem.safety ? 'text-emerald-400' : 'text-amber-400'}">${searchedVfd.parentItem.safetyDetail}</strong></div>
+                                    <div class="flex justify-between"><span class="text-slate-400 font-bold">E/S Estimadas:</span> <strong class="text-white">${searchedVfd.parentItem.aiCount} AI / ${searchedVfd.parentItem.diCount} DI / ${searchedVfd.parentItem.relays} Relé</strong></div>
+                                    <div class="flex justify-between"><span class="text-slate-400 font-bold">Lazo Cerrado / Encoder:</span> <strong class="text-white">${searchedVfd.parentItem.encoderSupport ? 'Sí' : 'No'}</strong></div>
+                                    <div class="flex justify-between"><span class="text-slate-400 font-bold">PLC Interno:</span> <strong class="text-white">${searchedVfd.parentItem.plcInternal ? 'Sí' : 'No'}</strong></div>
+                                </div>
+                            </div>
+
+                            <div class="flex items-center justify-between pt-2 border-t border-slate-700/80 flex-wrap gap-2">
+                                <button onclick="toggleCompareExternalRef(this)" data-vfd='${JSON.stringify(searchedVfd)}'
+                                        class="${isSearchedCompared ? 'bg-amber-600 text-white' : 'bg-slate-700 hover:bg-slate-600 text-slate-200 border border-slate-600'} text-xs font-bold px-3 py-1.5 rounded-lg transition flex items-center space-x-1 shadow">
+                                    <i class="fa-solid fa-scale-balanced"></i>
+                                    <span>${isSearchedCompared ? 'Buscado en Comparación' : 'Comparar Buscado'}</span>
+                                </button>
+                                <span class="text-[10px] text-slate-400 italic">Pre-configurado para tabla comparativa</span>
+                            </div>
+                        </div>
+
+                        <!-- ALTERNATIVA DEXIS RECOMENDADA -->
+                        ${bestItem && bestRef ? `
+                            <div class="bg-slate-800/90 p-4 rounded-xl border-2 border-emerald-500/80 flex flex-col justify-between space-y-3">
+                                <div>
+                                    <div class="flex items-center justify-between mb-1">
+                                        <span class="bg-emerald-500 text-slate-950 font-black text-[10px] uppercase px-2 py-0.5 rounded">
+                                            Alternativa Oficial Dexis (${bestRef.kw} kW)
+                                        </span>
+                                        <span class="text-xs font-bold text-emerald-400">${bestItem.brand} ${bestItem.model}</span>
+                                    </div>
+                                    <div class="font-mono text-sm font-bold text-white mt-1">Ref: ${bestRef.refFab} (${bestRef.kw} kW - ${bestRef.supply})</div>
+                                    <p class="text-[11px] text-slate-300 mt-1 line-clamp-2">${bestRef.shortDesc || bestItem.description}</p>
+                                    
+                                    <div class="mt-3 space-y-1.5 text-[11px] text-slate-300 bg-slate-900/60 p-3 rounded-lg border border-slate-700">
+                                        <div class="flex justify-between"><span class="text-slate-400 font-bold">Garantía Dexis:</span> <strong class="text-emerald-400 font-bold">${bestItem.warranty || '2 Años'}</strong></div>
+                                        <div class="flex justify-between"><span class="text-slate-400 font-bold">Potencia / Tensión:</span> <strong class="text-white">${bestRef.kw} kW | ${bestRef.supply}</strong></div>
+                                        <div class="flex justify-between"><span class="text-slate-400 font-bold">Seguridad (STO):</span> <strong class="text-emerald-400">${bestItem.safetyDetail || 'STO Integrada'}</strong></div>
+                                        <div class="flex justify-between"><span class="text-slate-400 font-bold">E/S Nativas:</span> <strong class="text-white">${bestItem.aiCount || 0} AI / ${bestItem.diCount || 0} DI / ${bestItem.relays || 0} Relé</strong></div>
+                                        <div class="flex justify-between"><span class="text-slate-400 font-bold">Lazo Cerrado / Encoder:</span> <strong class="text-white">${bestItem.encoderSupport ? 'Sí' : 'No'}</strong></div>
+                                        <div class="flex justify-between"><span class="text-slate-400 font-bold">PLC Interno:</span> <strong class="text-white">${bestItem.plcInternal ? 'Sí' : 'No'}</strong></div>
+                                    </div>
+                                </div>
+
+                                <div class="flex items-center justify-between pt-2 border-t border-slate-700/80 flex-wrap gap-2">
+                                    <div class="flex items-center space-x-2">
+                                        <button onclick="toggleCompareByRef('${bestRef.refFab}')" 
+                                                class="${isBestCompared ? 'bg-sky-600 text-white' : 'bg-slate-700 hover:bg-slate-600 text-slate-200 border border-slate-600'} text-xs font-bold px-3 py-1.5 rounded-lg transition flex items-center space-x-1 shadow">
+                                            <i class="fa-solid fa-scale-balanced"></i>
+                                            <span>${isBestCompared ? 'Alternativa en Comparación' : 'Comparar Alternativa'}</span>
+                                        </button>
+                                        <button onclick="includeInRoiCalculator(${bestRef.kw}, ${bestRef.pvp || 'null'})" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3 py-1.5 rounded-lg text-xs transition shadow flex items-center space-x-1">
+                                            <i class="fa-solid fa-leaf"></i>
+                                            <span>Cargar ROI</span>
+                                        </button>
+                                    </div>
+                                    <button onclick="consultDiscount('${bestItem.brand}', '${bestItem.model}', '${bestRef.refFab}', ${bestRef.kw}, ${bestRef.pvp || 'null'})" class="bg-amber-500 hover:bg-amber-600 text-white font-bold px-3 py-1.5 rounded-lg text-xs transition shadow flex items-center space-x-1">
+                                        <i class="fa-solid fa-envelope"></i>
+                                        <span>Cotización Directa</span>
+                                    </button>
+                                </div>
+                            </div>
+                        ` : `
+                            <div class="bg-slate-800/80 p-4 rounded-xl border border-slate-700 flex flex-col justify-center items-center text-center">
+                                <p class="text-slate-300 text-xs">No se ha podido mapear automáticamente un reemplazo exacto.</p>
+                                <button onclick="contactSupportNotFound()" class="mt-2 bg-amber-500 hover:bg-amber-600 text-white font-bold px-3 py-1.5 rounded-lg text-xs transition shadow">
+                                    Consultar con Soporte Técnico Dexis
+                                </button>
+                            </div>
+                        `}
+                    </div>
+
+                    ${bestItem && bestRef ? `
+                        <div class="pt-3 border-t border-indigo-800/80 flex items-center justify-between flex-wrap gap-2">
+                            <span class="text-xs text-indigo-200 font-medium">Compara de un vistazo las especificaciones técnicas del equipo buscado frente a la alternativa Dexis:</span>
+                            <button onclick="compareBothSearchedAndAlternative(this)" data-searched='${JSON.stringify(searchedVfd)}' data-alt='${JSON.stringify(altVfdObj)}' class="bg-gradient-to-r from-amber-500 to-emerald-600 hover:from-amber-600 hover:to-emerald-700 text-slate-950 font-black px-4 py-2 rounded-xl text-xs transition shadow-lg flex items-center space-x-2">
+                                <i class="fa-solid fa-scale-balanced text-sm"></i>
+                                <span>Comparar Ambos en Tabla (Buscado vs. Alternativa)</span>
+                            </button>
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+            container.classList.remove('hidden');
+        }
+
+        function toggleCompareExternalRef(btnElement) {
+            const vfdObj = JSON.parse(btnElement.getAttribute('data-vfd'));
+            const index = comparedReferences.findIndex(r => r.refFab.toLowerCase() === vfdObj.refFab.toLowerCase());
+            
+            if (index > -1) {
+                comparedReferences.splice(index, 1);
+                showToast(`Referencia externa ${vfdObj.refFab} eliminada de comparación`, "info");
+            } else {
+                if (comparedReferences.length >= 4) {
+                    showToast("Máximo 4 referencias en comparación.", "warning");
+                    return;
+                }
+                comparedReferences.push(vfdObj);
+                showToast(`Referencia externa ${vfdObj.refFab} añadida a comparación`, "success");
+            }
+            updateCompareButtonState();
+            applyFilters();
+        }
+
+        function compareBothSearchedAndAlternative(btnElement) {
+            const searchedObj = JSON.parse(btnElement.getAttribute('data-searched'));
+            const altObj = JSON.parse(btnElement.getAttribute('data-alt'));
+
+            if (!comparedReferences.some(r => r.refFab.toLowerCase() === searchedObj.refFab.toLowerCase())) {
+                if (comparedReferences.length < 4) comparedReferences.push(searchedObj);
+            }
+            if (altObj && !comparedReferences.some(r => r.refFab.toLowerCase() === altObj.refFab.toLowerCase())) {
+                if (comparedReferences.length < 4) comparedReferences.push(altObj);
+            }
+
+            updateCompareButtonState();
+            openCompareModal();
+            showToast("Comparativa de 'Buscado vs. Alternativa' cargada", "success");
+        }
+
+        function hideOnlineSearchBanner() {
+            const container = document.getElementById('online-search-container');
+            if (container) {
+                container.innerHTML = '';
+                container.classList.add('hidden');
+            }
+        }
+
+        function applyFilters() {
+            if (!Array.isArray(catalogData) || catalogData.length === 0) {
+                catalogData = JSON.parse(JSON.stringify(DEFAULT_CATALOG));
+            }
+
+            const powerVal = parseFloat(document.getElementById('filter-power').value) || 0;
+            const rawSearchQuery = document.getElementById('search-query').value.toLowerCase().trim();
+            const cleanQueryNoSpaces = rawSearchQuery.replace(/[\s\-_]/g, '');
+            const appVal = document.getElementById('filter-application').value;
+            const controlLoop = document.querySelector('input[name="control-loop"]:checked')?.value || 'all';
+            const stoChecked = document.getElementById('filter-sto').checked;
+            const plcChecked = document.getElementById('filter-plc').checked;
+            const commVal = document.getElementById('filter-comm').value;
+
+            const allBrandCheckboxes = document.querySelectorAll('.filter-brand');
+            const selectedBrands = Array.from(document.querySelectorAll('.filter-brand:checked')).map(cb => cb.value.toLowerCase());
+
+            const allVoltageCheckboxes = document.querySelectorAll('.filter-voltage');
+            const selectedVoltages = Array.from(document.querySelectorAll('.filter-voltage:checked')).map(cb => cb.value);
+
+            let searchTokens = rawSearchQuery ? rawSearchQuery.split(/\s+/) : [];
+            let exactMatchedItem = null;
+            let exactMatchedRef = null;
+
+            // Direct exact reference search
+            if (rawSearchQuery.length >= 2) {
+                for (const item of catalogData) {
+                    if (item.references) {
+                        const foundRef = item.references.find(r => {
+                            const refClean = r.refFab.toLowerCase().replace(/[\s\-_]/g, '');
+                            const modelClean = item.model.toLowerCase().replace(/[\s\-_]/g, '');
+                            return refClean === cleanQueryNoSpaces || 
+                                   r.refFab.toLowerCase().includes(rawSearchQuery) ||
+                                   (cleanQueryNoSpaces.length >= 4 && modelClean.includes(cleanQueryNoSpaces));
+                        });
+                        if (foundRef) { 
+                            exactMatchedItem = item; 
+                            exactMatchedRef = foundRef; 
+                            break; 
+                        }
+                    }
+                }
+            }
+
+            let matchedReferencesList = [];
+
+            catalogData.forEach(item => {
+                const itemBrandLower = item.brand.toLowerCase();
+                const matchesBrand = (allBrandCheckboxes.length === 0 || selectedBrands.length === 0)
+                    ? true
+                    : selectedBrands.some(sb => itemBrandLower.includes(sb) || sb.includes(itemBrandLower));
+                
+                if (!matchesBrand) return;
+
+                if (appVal !== 'all' && (!item.applications || !item.applications[appVal])) return;
+                if (controlLoop === 'closed' && !item.encoderSupport) return;
+                if (stoChecked && !item.safety) return;
+                if (plcChecked && !item.plcInternal) return;
+
+                if (commVal !== 'all') {
+                    const allComms = [...(item.nativeComm || []), ...(item.optionalComm || [])].map(c => c.toLowerCase());
+                    if (!allComms.some(c => c.includes(commVal.toLowerCase()))) return;
+                }
+
+                if (item.references) {
+                    item.references.forEach(ref => {
+                        if (item.isObsolete) return;
+
+                        if (exactMatchedRef && ref.refFab === exactMatchedRef.refFab && item.id === exactMatchedItem.id) return;
+                        if (allVoltageCheckboxes.length > 0 && selectedVoltages.length > 0 && !selectedVoltages.includes(ref.supply)) return;
+                        if (powerVal > 0 && Math.abs(ref.kw - powerVal) > 0.05) return;
+
+                        if (exactMatchedRef) {
+                            const matchKw = Math.abs(ref.kw - exactMatchedRef.kw) <= 0.05;
+                            const matchSupply = ref.supply === exactMatchedRef.supply;
+                            if (!matchKw || !matchSupply) return;
+                        } else if (searchTokens.length > 0) {
+                            let matchAllTokens = true;
+                            let combinedText = `${item.brand} ${item.model} ${item.description} ${ref.refFab} ${ref.shortDesc}`.toLowerCase();
+                            
+                            for (const token of searchTokens) {
+                                let tokenMatched = false;
+                                let cleanToken = token.replace(/kw$/, '').trim();
+                                let tokenNum = parseFloat(cleanToken);
+
+                                if (!isNaN(tokenNum) && /^(\d+(\.\d+)?)$/.test(cleanToken)) {
+                                    if (Math.abs(ref.kw - tokenNum) <= 0.05) {
+                                        tokenMatched = true;
+                                    } else {
+                                        const escapeRegExp = token.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+                                        const regex = new RegExp(`(?<![0-9.])${escapeRegExp}(?![0-9.])`, 'i');
+                                        if (regex.test(combinedText)) {
+                                            tokenMatched = true;
+                                        }
+                                    }
+                                } else {
+                                    if (combinedText.includes(token) || combinedText.replace(/[\s\-_]/g, '').includes(token.replace(/[\s\-_]/g, ''))) {
+                                        tokenMatched = true;
+                                    }
+                                }
+
+                                if (!tokenMatched) {
+                                    matchAllTokens = false;
+                                    break;
+                                }
+                            }
+                            if (!matchAllTokens) return;
+                        }
+
+                        matchedReferencesList.push({ parentItem: item, ref });
+                    });
+                }
+            });
+            
+            // Priority Order: Nidec -> Parker -> Danfoss -> Schneider -> Omron -> Yaskawa -> ABB -> Rest
+            matchedReferencesList.sort((a, b) => {
+                const brandA = a.parentItem.brand.toLowerCase();
+                const brandB = b.parentItem.brand.toLowerCase();
+
+                const getPriority = (bName) => {
+                    if (bName.includes('nidec')) return 1;
+                    if (bName.includes('parker')) return 2;
+                    if (bName.includes('danfoss') || bName.includes('vacon')) return 3;
+                    if (bName.includes('schneider')) return 4;
+                    if (bName.includes('omron')) return 5;
+                    if (bName.includes('yaskawa')) return 6;
+                    if (bName.includes('abb')) return 7;
+                    if (bName.includes('delta')) return 8;
+                    if (bName.includes('siemens')) return 9;
+                    if (bName.includes('mitsubishi')) return 10;
+                    if (bName.includes('allen') || bName.includes('rockwell')) return 11;
+                    return 12;
+                };
+
+                const pA = getPriority(brandA);
+                const pB = getPriority(brandB);
+
+                if (pA !== pB) return pA - pB;
+                return brandA.localeCompare(brandB);
+            });
+
+            if (rawSearchQuery.length >= 3 && matchedReferencesList.length === 0 && !exactMatchedRef) {
+                const parsedInfo = parseExternalReferencePattern(rawSearchQuery);
+                renderOnlineSearchBanner(parsedInfo);
+            } else {
+                hideOnlineSearchBanner();
+            }
+
+            renderExactMatchHeader(exactMatchedItem, exactMatchedRef);
+            renderExactReferencesResults(matchedReferencesList, exactMatchedRef !== null);
+            renderBadges(exactMatchedRef !== null);
+        }
+
+        function getTechnicalHighlightsBadges(item) {
+            let badges = [];
+            if (item.isObsolete) {
+                badges.push(`<span class="bg-rose-600 text-white font-black px-2 py-0.5 rounded text-[10px] shadow-sm flex items-center gap-1"><i class="fa-solid fa-triangle-exclamation"></i>OBSOLETO</span>`);
+            } else {
+                badges.push(`<span class="bg-emerald-100 text-emerald-950 border border-emerald-400 px-2 py-0.5 rounded font-black flex items-center gap-1 shadow-sm"><i class="fa-solid fa-shield-check text-emerald-600"></i>Garantía: ${item.warranty || '2 Años'}</span>`);
+            }
+
+            let ioText = `${item.aiCount || 0}AI / ${item.diCount || 0}DI / ${item.relays || 0}Relé`;
+            badges.push(`<span class="bg-slate-100 text-slate-800 border border-slate-200 px-2 py-0.5 rounded font-semibold"><i class="fa-solid fa-sliders text-slate-500 mr-1"></i>E/S: ${ioText}</span>`);
+
+            if (item.encoderSupport) {
+                badges.push(`<span class="bg-indigo-50 text-indigo-800 border border-indigo-200 px-2 py-0.5 rounded font-bold"><i class="fa-solid fa-microchip mr-1"></i>Lazo Cerrado</span>`);
+            } else {
+                badges.push(`<span class="bg-slate-100 text-slate-600 border border-slate-200 px-2 py-0.5 rounded font-medium">Lazo Abierto</span>`);
+            }
+
+            if (item.safety) {
+                badges.push(`<span class="bg-emerald-50 text-emerald-800 border border-emerald-200 px-2 py-0.5 rounded font-bold"><i class="fa-solid fa-shield-halved mr-1"></i>${item.safetyDetail || 'STO Integrada'}</span>`);
+            } else {
+                badges.push(`<span class="bg-amber-50 text-amber-800 border border-amber-200 px-2 py-0.5 rounded font-medium"><i class="fa-solid fa-triangle-exclamation mr-1"></i>Sin STO</span>`);
+            }
+
+            if (item.nativeComm && item.nativeComm.length > 0) {
+                badges.push(`<span class="bg-amber-50 text-amber-900 border border-amber-200 px-2 py-0.5 rounded font-bold"><i class="fa-solid fa-network-wired mr-1"></i>${item.nativeComm.join(', ')}</span>`);
+            }
+            if (item.plcInternal) badges.push(`<span class="bg-purple-50 text-purple-800 border border-purple-200 px-2 py-0.5 rounded font-bold"><i class="fa-solid fa-code mr-1"></i>PLC Interno</span>`);
+
+            return badges;
+        }
+
+        function renderExactMatchHeader(item, ref) {
+            const container = document.getElementById('exact-match-container');
+            const resultsHeading = document.getElementById('results-heading');
+            if (!container || !resultsHeading) return;
+
+            if (!item || !ref) {
+                container.innerHTML = '';
+                resultsHeading.classList.add('hidden');
+                return;
+            }
+
+            resultsHeading.classList.remove('hidden');
+            const isCompared = comparedReferences.some(r => r.refFab.toLowerCase() === ref.refFab.toLowerCase());
+            const techBadges = getTechnicalHighlightsBadges(item);
+            const pvpHtml = ref.pvp 
+                ? ref.pvp.toLocaleString('es-ES', {style:'currency', currency:'EUR'}) 
+                : `<button onclick="consultDiscount('${item.brand}', '${item.model}', '${ref.refFab}', ${ref.kw}, null)" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3 py-1 rounded text-xs transition shadow flex items-center gap-1"><i class="fa-solid fa-envelope"></i> Consultar</button>`;
+
+            container.innerHTML = `
+                <div class="bg-gradient-to-r ${item.isObsolete ? 'from-rose-950 via-slate-900 to-slate-900 border-2 border-rose-500' : 'from-slate-900 via-slate-800 to-slate-900 border-2 border-dexis-red'} text-white rounded-2xl shadow-xl p-6 mb-4">
+                    <div class="flex items-center justify-between pb-3 border-b border-slate-700 mb-4 flex-wrap gap-2">
+                        <div class="flex items-center space-x-3 flex-wrap gap-y-2">
+                            <span class="${item.isObsolete ? 'bg-rose-600' : 'bg-dexis-red'} text-white px-3 py-1 rounded-lg text-xs font-black uppercase tracking-wider">
+                                ${item.isObsolete ? 'Referencia / Modelo Obsoleto Encontrado' : 'Referencia Exacta Encontrada'}
+                            </span>
+                            <span class="text-xs text-slate-300 font-bold">${item.brand}</span>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <button onclick="toggleCompareByRef('${ref.refFab}')" 
+                                    class="${isCompared ? 'bg-sky-600 text-white' : 'bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-600'} text-xs font-bold px-3 py-1.5 rounded-lg transition flex items-center space-x-1.5 shadow">
+                                <i class="fa-solid fa-scale-balanced"></i>
+                                <span>${isCompared ? 'Comparando' : 'Comparar'}</span>
+                            </button>
+                            <button onclick="includeInRoiCalculator(${ref.kw}, ${ref.pvp || 'null'})" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center space-x-1.5 shadow">
+                                <i class="fa-solid fa-leaf"></i>
+                                <span>Incluir en ROI</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    ${item.isObsolete ? `
+                        <div class="bg-rose-900/60 border border-rose-500/80 p-3.5 rounded-xl text-rose-100 text-xs mb-4 flex items-center space-x-3">
+                            <i class="fa-solid fa-triangle-exclamation text-2xl text-rose-400 flex-shrink-0"></i>
+                            <div>
+                                <strong class="text-sm font-black text-rose-200 block">AVISO: Variador Descatalogado</strong>
+                                <span>Este modelo de variador ya no se fabrica. El sustituto directo recomendado en producción es <strong>${item.replacementModel || 'Danfoss iC2-Micro'}</strong>. Las alternativas compatibles se muestran abajo.</span>
+                            </div>
+                        </div>
+                    ` : ''}
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div class="md:col-span-2 space-y-3">
+                            <h3 class="text-lg font-extrabold text-white">${item.model}</h3>
+                            <div class="bg-slate-800/90 border border-slate-700 rounded-xl p-3 font-mono text-sm font-bold text-emerald-400 flex items-center justify-between">
+                                <span>Ref: ${ref.refFab}</span>
+                                <button onclick="openDetailModal('${item.id}')" class="bg-dexis-red hover:bg-dexis-darkred text-white px-2.5 py-1 rounded text-xs font-bold transition shadow">
+                                    Ver Ficha
+                                </button>
+                            </div>
+                            <p class="text-xs text-slate-300 leading-relaxed">${ref.shortDesc || item.description}</p>
+                            <div>
+                                <span class="text-[10px] uppercase font-black text-slate-400 tracking-wider block mb-1.5">Características Técnicas:</span>
+                                <div class="flex flex-wrap gap-1.5 text-[10px]">
+                                    ${techBadges.join('')}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-slate-800/90 border border-slate-700 rounded-xl p-4 flex flex-col justify-between text-xs space-y-3">
+                            <div class="space-y-1.5">
+                                <div class="flex justify-between"><span class="text-slate-400 font-bold">Estado:</span> <strong class="${item.isObsolete ? 'text-rose-400 font-black' : 'text-emerald-400 font-black'}">${item.isObsolete ? 'OBSOLETO' : 'En producción'}</strong></div>
+                                ${item.isObsolete ? `<div class="flex justify-between"><span class="text-slate-400 font-bold">Sustituto:</span> <strong class="text-amber-300 font-extrabold">${item.replacementModel || 'iC2-Micro'}</strong></div>` : ''}
+                                <div class="flex justify-between"><span class="text-slate-400 font-bold">Potencia:</span> <strong class="text-white">${ref.kw} kW</strong></div>
+                                <div class="flex justify-between"><span class="text-slate-400 font-bold">Tensión:</span> <strong class="text-white">${ref.supply}</strong></div>
+                                <div class="flex justify-between"><span class="text-slate-400 font-bold">Corriente:</span> <strong class="text-white">${ref.current ? ref.current + ' A' : 'N/D'}</strong></div>
+                            </div>
+                            <div class="pt-3 border-t border-slate-700 flex items-center justify-between">
+                                <span class="text-[10px] text-slate-400 font-bold uppercase">PVP Oficial / Cotización:</span>
+                                <span class="text-sm font-black text-emerald-400">${pvpHtml}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderExactReferencesResults(matchedList, isExactSearch) {
+            const container = document.getElementById('results-container');
+            const emptyState = document.getElementById('empty-state');
+            const countEl = document.getElementById('results-count');
+
+            countEl.innerText = `${matchedList.length} Equipos / Alternativas compatibles`;
+
+            if (matchedList.length === 0 && !isExactSearch) {
+                container.innerHTML = '';
+                emptyState.classList.remove('hidden');
+                return;
+            }
+            emptyState.classList.add('hidden');
+
+            container.className = "grid grid-cols-1 md:grid-cols-2 gap-4";
+            container.innerHTML = matchedList.map(({ parentItem, ref }) => {
+                const isCompared = comparedReferences.some(r => r.refFab.toLowerCase() === ref.refFab.toLowerCase());
+                const pvpHtml = ref.pvp 
+                    ? ref.pvp.toLocaleString('es-ES', {style:'currency', currency:'EUR'}) 
+                    : `<button onclick="consultDiscount('${parentItem.brand}', '${parentItem.model}', '${ref.refFab}', ${ref.kw}, null)" class="text-emerald-600 hover:text-emerald-800 font-bold underline text-xs flex items-center gap-1"><i class="fa-solid fa-envelope"></i> Consultar</button>`;
+                const techBadges = getTechnicalHighlightsBadges(parentItem);
+
+                return `
+                    <div class="bg-white rounded-xl shadow-sm border ${parentItem.isObsolete ? 'border-rose-300 bg-rose-50/20' : 'border-slate-200'} p-5 flex flex-col justify-between hover:shadow-md transition">
+                        <div>
+                            <div class="flex items-center justify-between mb-2">
+                                <div class="flex items-center space-x-2">
+                                    <span class="px-2.5 py-0.5 rounded text-[10px] font-bold uppercase bg-dexis-red text-white">${parentItem.brand}</span>
+                                    ${parentItem.isObsolete ? `
+                                        <span class="bg-rose-100 text-rose-900 border border-rose-300 text-[10px] font-black px-2 py-0.5 rounded-md inline-flex items-center gap-1 shadow-sm">
+                                            <i class="fa-solid fa-triangle-exclamation text-rose-600"></i> OBSOLETO
+                                        </span>
+                                    ` : `
+                                        <span class="bg-emerald-100 text-emerald-900 border border-emerald-300 text-[10px] font-black px-2 py-0.5 rounded-md inline-flex items-center gap-1 shadow-sm" title="Garantía Oficial del Fabricante">
+                                            <i class="fa-solid fa-shield-check text-emerald-600"></i> ${parentItem.warranty || '2 Años'}
+                                        </span>
+                                    `}
+                                </div>
+                                <button onclick="includeInRoiCalculator(${ref.kw}, ${ref.pvp || 'null'})" class="bg-emerald-600/10 hover:bg-emerald-600/20 text-emerald-700 border border-emerald-300 px-2 py-0.5 rounded text-[10px] font-bold transition flex items-center space-x-1">
+                                    <i class="fa-solid fa-leaf"></i>
+                                    <span>Incluir en ROI</span>
+                                </button>
+                            </div>
+                            <h4 class="font-bold text-slate-900 text-sm mb-1">${parentItem.model}</h4>
+                            <div class="bg-slate-50 border border-slate-200 rounded-lg p-2.5 my-2 space-y-1">
+                                <span onclick="selectReferenceAndDisplayExact('${ref.refFab}')" class="font-mono font-bold text-xs text-dexis-red hover:underline cursor-pointer block truncate" title="Pincha para colocar en ROI y mostrar ficha exacta">
+                                    Ref: ${ref.refFab} <i class="fa-solid fa-arrow-up-right-from-square text-[9px] ml-1"></i>
+                                </span>
+                                <p class="text-xs text-slate-600 line-clamp-2">${ref.shortDesc || parentItem.description}</p>
+                                <div class="text-[11px] text-slate-700 font-semibold pt-1 border-t border-slate-200/60 flex items-center justify-between">
+                                    <span>${ref.kw} kW | ${ref.supply}</span>
+                                    <span>${ref.current ? ref.current + ' A' : 'N/D'} | IP${ref.ip || 20}</span>
+                                </div>
+                            </div>
+
+                            <div class="mt-2.5 mb-2">
+                                <span class="text-[10px] uppercase font-black text-slate-400 tracking-wider block mb-1">Características Técnicas:</span>
+                                <div class="flex flex-wrap gap-1 text-[10px]">
+                                    ${techBadges.join('')}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center justify-between pt-3 border-t border-slate-100 mt-2">
+                            <button onclick="toggleCompareByRef('${ref.refFab}')" 
+                                    class="${isCompared ? 'bg-sky-600 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-300'} text-[11px] font-bold px-2.5 py-1.5 rounded-lg transition flex items-center space-x-1">
+                                <i class="fa-solid fa-scale-balanced"></i>
+                                <span>${isCompared ? 'Comparando' : 'Comparar'}</span>
+                            </button>
+                            <div class="flex items-center space-x-2">
+                                <div>
+                                    <span class="text-[9px] text-slate-400 block font-bold uppercase text-right">PVP Oficial</span>
+                                    <span class="text-sm font-black text-emerald-600 block">${pvpHtml}</span>
+                                </div>
+                                <button onclick="openDetailModal('${parentItem.id}')" class="bg-dexis-red hover:bg-dexis-darkred text-white px-3 py-1.5 rounded-lg text-xs font-bold transition shadow">
+                                    Ver Ficha
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderBadges(hasExact) {
+            const container = document.getElementById('active-badges');
+            const powerVal = parseFloat(document.getElementById('filter-power').value);
+            const searchQuery = document.getElementById('search-query').value.trim();
+            let badges = [];
+            if (powerVal > 0) badges.push(`Potencia: ${powerVal} kW`);
+            if (searchQuery) badges.push(hasExact ? `Búsqueda Exacta: "${searchQuery}"` : `Búsqueda: "${searchQuery}"`);
+
+            container.innerHTML = badges.map(b => `
+                <span class="inline-flex items-center space-x-1 bg-slate-200 text-slate-800 text-xs font-semibold px-2.5 py-1 rounded-full">
+                    <span>${b}</span>
+                </span>
+            `).join('');
+        }
+
+        function toggleCompareByRef(refFab) {
+            let parentItem = null;
+            let refObj = null;
+
+            for (const item of catalogData) {
+                if (item.references) {
+                    const found = item.references.find(r => r.refFab.toLowerCase() === refFab.toLowerCase());
+                    if (found) {
+                        parentItem = item;
+                        refObj = found;
+                        break;
+                    }
+                }
+            }
+
+            if (!parentItem || !refObj) return;
+
+            const index = comparedReferences.findIndex(r => r.refFab.toLowerCase() === refFab.toLowerCase());
+            if (index > -1) {
+                comparedReferences.splice(index, 1);
+                showToast(`Referencia ${refObj.refFab} eliminada de comparación`, "info");
+            } else {
+                if (comparedReferences.length >= 4) {
+                    showToast("Máximo 4 referencias en comparación.", "warning");
+                    return;
+                }
+                comparedReferences.push({
+                    brand: parentItem.brand,
+                    model: parentItem.model,
+                    parentItem,
+                    ...refObj
+                });
+                showToast(`Referencia ${refObj.refFab} añadida a comparación`, "success");
+            }
+            updateCompareButtonState();
+            applyFilters();
+        }
+
+        function updateCompareButtonState() {
+            const btn = document.getElementById('compare-top-btn');
+            const badge = document.getElementById('compare-count-badge');
+            if (!btn || !badge) return;
+            badge.innerText = comparedReferences.length;
+            if (comparedReferences.length > 0) btn.classList.remove('hidden');
+            else btn.classList.add('hidden');
+        }
+
+        function openCompareModal() {
+            if (comparedReferences.length === 0) return;
+            document.getElementById('compare-modal-count').innerText = comparedReferences.length;
+            renderCompareTable();
+            document.getElementById('compare-modal').classList.remove('hidden');
+        }
+
+        function renderCompareTable() {
+            const body = document.getElementById('compare-modal-body');
+            const highlightDiffs = document.getElementById('toggle-highlight-diffs')?.checked || false;
+
+            if (!body || comparedReferences.length === 0) return;
+
+            const rowsConfig = [
+                {
+                    label: "Estado / Garantía",
+                    getValue: (r) => r.parentItem?.isObsolete ? 'OBSOLETO' : (r.parentItem?.warranty || 'Garantía Estándar')
+                },
+                {
+                    label: "Entradas / Salidas (E/S)",
+                    getValue: (r) => `${r.parentItem?.aiCount || 0} AI / ${r.parentItem?.diCount || 0} DI / ${r.parentItem?.relays || 0} Relé`
+                },
+                {
+                    label: "Seguridad Integrada (STO)",
+                    getValue: (r) => r.parentItem?.safetyDetail || (r.parentItem?.safety ? 'Sí' : 'No')
+                },
+                {
+                    label: "Control Lazo Cerrado (Encoder)",
+                    getValue: (r) => r.parentItem?.encoderSupport ? 'Sí' : 'No'
+                },
+                {
+                    label: "PLC Interno Programable",
+                    getValue: (r) => r.parentItem?.plcInternal ? 'Sí' : 'No'
+                },
+                {
+                    label: "Potencia Nominal (kW)",
+                    getValue: (r) => `${r.kw} kW`
+                },
+                {
+                    label: "Tensión de Alimentación",
+                    getValue: (r) => r.supply
+                },
+                {
+                    label: "PVP Oficial / Cotización",
+                    getValue: (r) => r.pvp ? r.pvp.toLocaleString('es-ES', {style:'currency', currency:'EUR'}) : 'A consultar'
+                }
+            ];
+
+            body.innerHTML = `
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse text-xs">
+                        <thead>
+                            <tr class="bg-slate-100 border-b border-slate-300 font-bold text-slate-700">
+                                <th class="p-3 w-48 bg-slate-100 sticky left-0 shadow-sm">Característica Técnica</th>
+                                ${comparedReferences.map((r) => `
+                                    <th class="p-3 text-center bg-slate-200/50 min-w-[200px]">
+                                        <div class="font-extrabold text-dexis-red">${r.brand}</div>
+                                        <div class="text-slate-900">${r.model}</div>
+                                        <div class="font-mono text-[11px] text-dexis-red hover:underline cursor-pointer mt-1" onclick="closeModal('compare-modal'); selectReferenceAndDisplayExact('${r.refFab}')">${r.refFab}</div>
+                                        <div class="mt-2"><button onclick="toggleCompareByRef('${r.refFab}')" class="text-rose-600 underline text-[10px]">Quitar</button></div>
+                                    </th>
+                                `).join('')}
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-200">
+                            ${rowsConfig.map(row => {
+                                const values = comparedReferences.map(r => row.getValue(r));
+                                const isDifferent = new Set(values).size > 1;
+                                const rowHighlightClass = (highlightDiffs && isDifferent) ? 'bg-amber-100/80 font-bold border-l-4 border-amber-500' : 'hover:bg-slate-50';
+
+                                return `
+                                    <tr class="${rowHighlightClass} transition">
+                                        <td class="p-3 font-extrabold text-slate-800 bg-slate-50/80 sticky left-0">${row.label} ${highlightDiffs && isDifferent ? '<i class="fa-solid fa-circle-exclamation text-amber-600 text-[10px] ml-1" title="Valores diferentes"></i>' : ''}</td>
+                                        ${comparedReferences.map(r => {
+                                            const val = row.getValue(r);
+                                            return `<td class="p-3 text-center font-semibold text-slate-900">${val}</td>`;
+                                        }).join('')}
+                                    </tr>
+                                `;
+                            }).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+        }
+
+        function printCompareTable() {
+            if (comparedReferences.length === 0) return;
+            document.body.classList.add('print-compare');
+            window.print();
+            document.body.classList.remove('print-compare');
+        }
+
+        function generateCompareSummaryText() {
+            if (comparedReferences.length === 0) return "";
+
+            let summary = `--- DEXIS IBÉRICA - INFORME DE COMPARATIVA TÉCNICA DE VARIADORES ---\n\n`;
+            comparedReferences.forEach((r, idx) => {
+                summary += `[Opción ${idx + 1}] ${r.brand} ${r.model}\n`;
+                summary += `  - Referencia Comercial: ${r.refFab}\n`;
+                summary += `  - Potencia: ${r.kw} kW | Alimentación: ${r.supply}\n`;
+                summary += `  - Garantía / Estado: ${r.parentItem?.isObsolete ? 'OBSOLETO' : (r.parentItem?.warranty || '2 Años')}\n`;
+                summary += `  - Seguridad (STO): ${r.parentItem?.safetyDetail || (r.parentItem?.safety ? 'Sí' : 'No')}\n`;
+                summary += `  - Control Encoder: ${r.parentItem?.encoderSupport ? 'Lazo Cerrado' : 'Lazo Abierto'}\n`;
+                summary += `  - PLC Interno: ${r.parentItem?.plcInternal ? 'Sí' : 'No'}\n`;
+                summary += `  - PVP Oficial: ${r.pvp ? r.pvp.toLocaleString('es-ES', {style:'currency', currency:'EUR'}) : 'A consultar'}\n\n`;
+            });
+            summary += `Atentamente,\nEquipo Técnico-Comercial Dexis Ibérica\nContacto: victor.mansoc@dexis-iberica.com`;
+            return summary;
+        }
+
+        function copyCompareSummaryToClipboard() {
+            const text = generateCompareSummaryText();
+            if (!text) return;
+            navigator.clipboard.writeText(text).then(() => {
+                showToast("Comparativa copiada al portapapeles", "success");
+            }).catch(() => {
+                showToast("Error al copiar al portapapeles", "error");
+            });
+        }
+
+        function emailCompareReport() {
+            const text = generateCompareSummaryText();
+            if (!text) return;
+
+            const targetEmail = "victor.mansoc@dexis-iberica.com";
+            const subject = encodeURIComponent(`[Comparativa Técnica Variadores] ${comparedReferences.length} Opciones - Dexis`);
+            
+            window.location.href = `mailto:${targetEmail}?subject=${subject}&body=${encodeURIComponent(text)}`;
+            showToast("Generando correo a victor.mansoc@dexis-iberica.com...", "info");
+        }
+
+        function clearComparison() {
+            comparedReferences = [];
+            updateCompareButtonState();
+            closeModal('compare-modal');
+            applyFilters();
+            showToast("Comparación vaciada", "info");
+        }
+
+        function openDetailModal(id) {
+            const item = catalogData.find(i => i.id === id);
+            if (!item) return;
+
+            document.getElementById('modal-brand-badge').innerText = item.brand;
+            document.getElementById('modal-title').innerText = item.model;
+
+            const modalDiscountBtn = document.getElementById('modal-discount-btn');
+            if (modalDiscountBtn) {
+                modalDiscountBtn.setAttribute('onclick', `consultDiscount('${item.brand}', '${item.model}', '', ${item.powerMin}, null)`);
+            }
+
+            const techBadges = getTechnicalHighlightsBadges(item);
+            const body = document.getElementById('modal-body');
+            body.innerHTML = `
+                <div class="space-y-4 text-xs">
+                    ${item.isObsolete ? `
+                        <div class="bg-rose-50 border-2 border-rose-400 p-4 rounded-xl text-rose-900 flex items-center space-x-3">
+                            <i class="fa-solid fa-triangle-exclamation text-2xl text-rose-600 flex-shrink-0"></i>
+                            <div>
+                                <strong class="text-sm block">ATENCIÓN: Gama Obsoleta / Descatalogada</strong>
+                                <span>Este equipo está descatalogado por el fabricante. La familia actual en producción y sustituto directo recomendado es <strong>${item.replacementModel || 'Danfoss iC2-Micro'}</strong>.</span>
+                            </div>
+                        </div>
+                    ` : ''}
+
+                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                        <h4 class="font-bold text-slate-900 text-sm mb-1">Descripción General</h4>
+                        <p class="text-slate-600 leading-relaxed">${item.description}</p>
+                    </div>
+
+                    <div class="bg-slate-100 p-3 rounded-xl border border-slate-200">
+                        <span class="text-[10px] uppercase font-black text-slate-500 tracking-wider block mb-1">Características Técnicas y E/S</span>
+                        <div class="flex flex-wrap gap-1.5 text-[10px]">
+                            ${techBadges.join('')}
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div class="bg-slate-50 p-3 rounded-lg border border-slate-100">
+                            <span class="text-slate-400 block text-[10px] uppercase font-bold">Rango Potencia</span>
+                            <strong class="text-slate-900 text-sm block mt-0.5">${item.powerMin} - ${item.powerMax} kW</strong>
+                        </div>
+                        <div class="bg-slate-50 p-3 rounded-lg border border-slate-100">
+                            <span class="text-slate-400 block text-[10px] uppercase font-bold">Seguridad STO</span>
+                            <strong class="${item.safety ? 'text-emerald-600' : 'text-slate-500'} text-sm block mt-0.5">${item.safetyDetail || (item.safety ? 'Sí' : 'No')}</strong>
+                        </div>
+                    </div>
+
+                    <div>
+                        <div class="flex items-center justify-between mb-2">
+                            <h4 class="font-bold text-slate-900">Referencias Comerciales y Precios Oficiales</h4>
+                            <span class="text-[11px] text-slate-500">${item.references ? item.references.length : 0} referencias</span>
+                        </div>
+                        <div class="overflow-x-auto max-h-60 border border-slate-200 rounded-xl">
+                            <table class="w-full text-left border-collapse">
+                                <thead class="bg-slate-100 sticky top-0 text-[10px] font-bold uppercase text-slate-600">
+                                    <tr>
+                                        <th class="p-2.5">Ref. Fabricante</th>
+                                        <th class="p-2.5">Descripción Corta</th>
+                                        <th class="p-2.5">Alim.</th>
+                                        <th class="p-2.5">kW</th>
+                                        <th class="p-2.5">I (A)</th>
+                                        <th class="p-2.5">PVP Oficial</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-100">
+                                    ${item.references && item.references.length > 0 ? item.references.map(r => `
+                                        <tr class="hover:bg-slate-50">
+                                            <td class="p-2.5 font-mono font-bold text-dexis-red hover:underline cursor-pointer" onclick="closeModal('detail-modal'); selectReferenceAndDisplayExact('${r.refFab}')">
+                                                ${r.refFab} <i class="fa-solid fa-arrow-up-right-from-square text-[9px] ml-0.5"></i>
+                                            </td>
+                                            <td class="p-2.5 text-slate-600">${r.shortDesc || '-'}</td>
+                                            <td class="p-2.5 font-semibold">${r.supply}</td>
+                                            <td class="p-2.5 font-bold text-dexis-red">${r.kw} kW</td>
+                                            <td class="p-2.5">${r.current ? r.current + ' A' : '-'}</td>
+                                            <td class="p-2.5 font-bold">
+                                                ${r.pvp ? r.pvp.toLocaleString('es-ES', {style:'currency', currency:'EUR'}) : `<button onclick="consultDiscount('${item.brand}', '${item.model}', '${r.refFab}', ${r.kw}, null)" class="text-emerald-600 hover:text-emerald-800 font-bold underline text-xs flex items-center gap-1"><i class="fa-solid fa-envelope"></i> Consultar</button>`}
+                                            </td>
+                                        </tr>
+                                    `).join('') : `<tr><td colspan="6" class="p-4 text-center text-slate-400">No hay referencias</td></tr>`}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.getElementById('detail-modal').classList.remove('hidden');
+        }
+
+        function consultDiscount(brand, model, refCode, kw, pvp) {
+            const targetEmail = "victor.mansoc@dexis-iberica.com";
+            const subject = encodeURIComponent(`[Consulta Descuento / Precio] ${brand} ${model} ${refCode ? '- Ref: ' + refCode : ''}`);
+            const pvpStr = pvp ? `${pvp.toLocaleString('es-ES', {style:'currency', currency:'EUR'})}` : 'A Consultar';
+            
+            const bodyText = `Hola Víctor,\n\nSolicito información de precio y descuento de venta para el siguiente equipo de accionamiento:\n\n` +
+                `- Marca: ${brand}\n` +
+                `- Modelo: ${model}\n` +
+                `${refCode ? '- Referencia Comercial: ' + refCode + '\n' : ''}` +
+                `- Potencia: ${kw} kW\n` +
+                `- PVP Oficial Catálogo: ${pvpStr}\n\n` +
+                `Por favor, indícame el precio neto y el descuento aplicable.\n\nUn saludo.`;
+
+            window.location.href = `mailto:${targetEmail}?subject=${subject}&body=${encodeURIComponent(bodyText)}`;
+            showToast("Generando correo a victor.mansoc@dexis-iberica.com...", "info");
+        }
+
+        function contactSupportNotFound() {
+            const targetEmail = "victor.mansoc@dexis-iberica.com";
+            const query = document.getElementById('search-query')?.value.trim() || '';
+            const power = document.getElementById('filter-power')?.value.trim() || '';
+            
+            const subject = encodeURIComponent(`[Soporte Variadores] Consulta de Selección / Variador No Encontrado`);
+            
+            let queryInfo = '';
+            if (query) queryInfo += `- Búsqueda realizada: "${query}"\n`;
+            if (power) queryInfo += `- Potencia solicitada: ${power} kW\n`;
+
+            const bodyText = `Hola Víctor,\n\nNecesito ayuda y asesoramiento para seleccionar o cotizar un equipo variador de frecuencia Dexis:\n\n` +
+                `${queryInfo || '- Consulta de selección general\n'}\n` +
+                `Por favor, ponte en contacto conmigo para confirmarme la opción más recomendable.\n\nGracias.`;
+
+            window.location.href = `mailto:${targetEmail}?subject=${subject}&body=${encodeURIComponent(bodyText)}`;
+            showToast("Generando consulta a victor.mansoc@dexis-iberica.com...", "info");
+        }
+
+        function showToast(message, type = "info") {
+            const toast = document.getElementById('toast');
+            const toastMsg = document.getElementById('toast-message');
+            const toastIcon = document.getElementById('toast-icon');
+            if (!toast) return;
+            toastMsg.innerText = message;
+            if (type === 'success') toastIcon.className = "fa-solid fa-circle-check text-emerald-400 text-lg";
+            else if (type === 'warning' || type === 'error') toastIcon.className = "fa-solid fa-circle-exclamation text-rose-400 text-lg";
+            else toastIcon.className = "fa-solid fa-circle-info text-amber-400 text-lg";
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            setTimeout(() => toast.classList.add('translate-y-20', 'opacity-0'), 3500);
+        }
+
+        function closeModal(id) {
+            const modal = document.getElementById(id);
+            if (modal) modal.classList.add('hidden');
+        }
+
+        function resetFilters() {
+            document.getElementById('filter-power').value = '';
+            document.getElementById('search-query').value = '';
+            document.querySelectorAll('.filter-voltage').forEach(cb => cb.checked = true);
+            document.querySelectorAll('.filter-brand').forEach(cb => cb.checked = true);
+            document.getElementById('filter-application').value = 'all';
+            const radioAll = document.querySelector('input[name="control-loop"][value="all"]');
+            if (radioAll) radioAll.checked = true;
+            document.getElementById('filter-sto').checked = false;
+            document.getElementById('filter-plc').checked = false;
+            document.getElementById('filter-comm').value = 'all';
+            hideOnlineSearchBanner();
+            applyFilters();
+            showToast("Filtros restablecidos", "info");
+        }
+    </script>
+</body>
+</html>
